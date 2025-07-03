@@ -109,9 +109,8 @@ ai-feedback/
 
 ### 1. Install Dependencies
 
-```r
-source("ai-feedback/helpers/install_dependencies.R")
-install_if_missing(c("optparse", "jsonlite", "dotenv", "openai", "R6"))
+```bash
+Rscript required_packages.R
 ```
 
 ### 2. Set API Key
@@ -120,53 +119,32 @@ Create a `.env` file in the project root:
 
 ```env
 OPENAI_API_KEY=your_openai_key_here
+ClAUDE_API_KEY=your_claude_key_here
+REMOTE_API_KEY=your_remote_key_here
 ```
 
 ## Example Commands
 
-### Evaluate Code with Predefined Prompt
-
-```bash
-Rscript ai-feedback/main.R \
-  --prompt code_lines \
-  --scope code \
-  --submission test_submissions/bfs_example/bfs_submission.py \
-  --solution test_submissions/bfs_example/bfs_solution.py \
-  --model openai \
-  --output outputs/bfs_feedback.md
-```
-
 ### Evaluate Text with Inline Prompt
 
 ```bash
-Rscript ai-feedback/main.R \
-  --prompt_text "Does the student's explanation satisfy the rubric?" \
-  --scope text \
-  --submission test_submissions/pdf_example/student_submission.pdf \
-  --solution test_submissions/pdf_example/instructor_solution.pdf \
-  --model openai
-```
-
-### Evaluate Image with Custom Prompt File
-
-```bash
-Rscript ai-feedback/main.R \
-  --prompt_custom custom_prompts/image_criteria.md \
-  --scope image \
-  --submission_image image_test/submission.png \
-  --solution_image image_test/solution.png \
-  --model openai
+Rscript ai-feedback/main.R --scope code --model remote --submission "test_submissions/sta130_code_example/fail_submission/fail_submission.R" --solution test_submissions/sta130_code_example/solution.R --prompt code_table --system_prompt student_test_feedback --output_template response_only
 ```
 
 ## Requirements
 
 Ensure the following packages are installed via `install_if_missing()`:
 
-* `optparse`
-* `jsonlite`
-* `dotenv`
-* `openai`
-* `R6`
+  * `optparse`,
+  * `jsonlite`,
+  * `magick`,
+  * `base64enc`,
+  * `jsonlite`,
+  * `stringr`,
+  * `tools`,
+  * `httr`,
+  * `dotenv`,
+  * `R6`,
 
 Also ensure `.env` is present with your API key.
 
@@ -175,5 +153,3 @@ Also ensure `.env` is present with your API key.
 This project is derived from the original Python version and follows the same academic fair use and research-oriented licensing assumptions.
 
 ---
-
-This version is modular and extensible. You can add additional model support (Claude, Ollama, etc.), new prompt types, or integrate it with learning platforms like MarkUs or Gradescope.
