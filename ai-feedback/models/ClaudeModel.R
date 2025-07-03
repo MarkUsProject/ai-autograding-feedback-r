@@ -38,13 +38,6 @@ ClaudeModel <- R6Class("ClaudeModel",
       #' @return List with prompt and response text, or NULL if failed
 
       request <- ""
-      if (!is.null(question_num)) {
-        request <- paste0(
-          "Identify and generate a response for the mistakes **only** in question/task ",
-          question_num,
-          ". "
-        )
-      }
       request <- paste0(request, prompt)
 
       body <- toJSON(list(
@@ -71,8 +64,8 @@ ClaudeModel <- R6Class("ClaudeModel",
       )
 
       if (res$status_code != 200) {
-        warning("Claude API call failed: ", content(res, "text"))
-        return(NULL)
+        stop(sprintf("Claude API call failed [HTTP %s]: %s",
+                    res$status_code, content(res, "text")))
       }
 
       parsed <- content(res, as = "parsed", type = "application/json")

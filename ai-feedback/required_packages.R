@@ -1,4 +1,5 @@
-# dependencies/packages.R
+# required_packages.R
+
 source("ai-feedback/helpers/install_dependencies.R")
 # List of required packages
 required_packages <- c(

@@ -36,13 +36,13 @@ process_text <- function(args, prompt, system_instructions) {
     test_output_file <- args$test_output
   }
 
-  prompt <- render_prompt_template(
-    prompt,
-    submission = submission_file,
-    solution = solution_file,
-    test_output = test_output_file,
-    question_num = args$question
-  )
+  # prompt <- render_prompt_template(
+  #   prompt,
+  #   submission = submission_file,
+  #   solution = solution_file,
+  #   test_output = test_output_file,
+  #   question_num = args$question
+  # )
 
   model_class <- model_mapping[[args$model]]
   if (is.null(model_class)) {
