@@ -137,11 +137,7 @@ gather_file_contents <- function(file_paths) {
         
         for (i in seq_along(lines)) {
           stripped_line <- trimws(lines[i], which = "right")
-          if (nzchar(stripped_line)) {
-            file_contents <- paste0(file_contents, "(Line ", i, ") ", stripped_line, "\n")
-          } else {
-            file_contents <- paste0(file_contents, "(Line ", i, ") ", lines[i], "\n")
-          }
+          file_contents <- paste0(file_contents, "(Line ", i, ") ", lines[i], "\n")
         }
         file_contents <- paste0(file_contents, "\n")
       }
