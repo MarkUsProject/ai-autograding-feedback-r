@@ -1,3 +1,6 @@
+# text_processing.R
+source("ai-feedback/helpers/constants.R")
+
 #' Process text-based submissions and generate model feedback.
 #'
 #' This function loads submission and solution files, constructs a prompt,

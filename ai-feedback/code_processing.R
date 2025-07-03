@@ -1,4 +1,6 @@
 # helpers/process_text.R
+source("ai-feedback/helpers/constants.R")
+
 
 #' Process code-based assignment files and generate model feedback.
 #'
@@ -38,13 +40,13 @@ process_code <- function(args, prompt, system_instructions) {
     test_output_file <- args$test_output
   }
 
-  prompt <- render_prompt_template(
-    prompt,
-    submission = submission_file,
-    solution = solution_file,
-    test_output = test_output_file,
-    question_num = args$question
-  )
+  # prompt <- render_prompt_template(
+  #   prompt,
+  #   submission = submission_file,
+  #   solution = solution_file,
+  #   test_output = test_output_file,
+  #   question_num = args$question
+  # )
 
   model_class <- model_mapping[[args$model]]
   if (is.null(model_class)) {
