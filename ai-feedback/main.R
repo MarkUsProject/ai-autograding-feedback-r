@@ -13,31 +13,33 @@ suppressWarnings(suppressMessages({
   library(jsonlite)
 }))
 
+get_script_dir <- function() {
+  script_path <- tryCatch({
+    sys.frame(1)$ofile
+  }, error = function(e) NULL)
+  
+  if (!is.null(script_path)) {
+    return(dirname(script_path))
+  }
+  
+  return(".")
+}
+
+SCRIPT_DIR <- get_script_dir()
+
 # Load markdown prompt file
-load_markdown_prompt <- function(prompt_name, script_dir) {
-  prompt_file <- file.path(script_dir, "data", "prompts", "user", paste0(prompt_name, ".md"))
+load_markdown_prompt <- function(prompt_name) {
+  prompt_file <- file.path(SCRIPT_DIR, "data", "prompts", "user", paste0(prompt_name, ".md"))
   if (!file.exists(prompt_file)) stop(paste("Error: Prompt file not found:", prompt_file))
   list(prompt_content = paste(readLines(prompt_file), collapse = "\n"))
 }
+
 # Load markdown output template
-load_markdown_template <- function(template, script_dir) {
-  template_file <- file.path(script_dir, "data", "output", paste0(template, ".md"))
+load_markdown_template <- function(template) {
+  template_file <- file.path(SCRIPT_DIR, "data", "output", paste0(template, ".md"))
   if (!file.exists(template_file)) stop(paste("Error: Template file not found:", template_file))
   paste(readLines(template_file), collapse = "\n")
 }
-
-
-get_script_dir <- function() {
-  # Detect script path whether using Rscript or source()
-  cmdArgs <- commandArgs(trailingOnly = FALSE)
-  match <- grep("--file=", cmdArgs)
-  if (length(match) > 0) {
-    return(dirname(normalizePath(sub("--file=", "", cmdArgs[match]))))
-  } else {
-    return(dirname(normalizePath(sys.frames()[[1]]$ofile)))
-  }
-}
-
 
 main <- function() {
   option_list <- list(
@@ -59,9 +61,8 @@ main <- function() {
   parser <- OptionParser(option_list = option_list)
   args <- parse_args(parser)
 
-  script_dir <- get_script_dir()
   prompt_content <- ""
-  system_prompt_path <- file.path(script_dir, "data", "prompts", "system", paste0(args$system_prompt, ".md"))
+  system_prompt_path <- file.path(SCRIPT_DIR, "data", "prompts", "system", paste0(args$system_prompt, ".md"))
   system_instructions <- paste(readLines(system_prompt_path), collapse = "\n")
   
   if (!is.null(args$prompt_custom)) {
@@ -69,7 +70,7 @@ main <- function() {
   } else {
     if (!is.null(args$prompt)) {
       if (!startsWith(args$prompt, args$scope)) stop("Prompt prefix does not match scope.")
-      prompt <- load_markdown_prompt(args$prompt, script_dir)
+      prompt <- load_markdown_prompt(args$prompt)
       prompt_content <- paste0(prompt_content, prompt$prompt_content)
     }
     if (!is.null(args$prompt_text)) {
@@ -85,7 +86,7 @@ main <- function() {
     response <- process_code(args, prompt_content, system_instructions)
   }
 
-  markdown_template <- load_markdown_template(args$output_template, script_dir)
+  markdown_template <- load_markdown_template(args$output_template)
   output_text <- markdown_template
   output_text <- gsub("\\{model\\}", args$model, output_text)
   output_text <- gsub("\\{request\\}", prompt_content, output_text)
