@@ -1,3 +1,6 @@
+# text_processing.R
+source("ai-feedback/helpers/constants.R")
+
 # Source required helper functions
 script_dir <- tryCatch({
   dirname(sys.frame(1)$ofile)
