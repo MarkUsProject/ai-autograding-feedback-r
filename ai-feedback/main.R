@@ -1,6 +1,4 @@
 # main.R
-print(getwd())  # Should be the root of your project, e.g., ai-feedback/
-
 source("ai-feedback/helpers/install_dependencies.R")
 source("ai-feedback/image_processing.R")
 source("ai-feedback/code_processing.R")
