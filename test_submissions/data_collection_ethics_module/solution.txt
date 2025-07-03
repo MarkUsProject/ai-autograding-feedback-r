@@ -1,0 +1,23 @@
+### Rubric for Evaluating Responses
+
+*Ethical use of publicly available social-media data for ML training*
+
+| #     | Criterion                             | What to Look For                                                                                                                                                                        | Typical Indicators                                                                                                                                     |
+| ----- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **1** | **Clear Position (Thesis)**           | • Does the writer state **yes / no / conditional**? <br>• Is the stance unambiguous and placed early?                                                                                   | “Yes, under narrowly defined conditions …”, “No, because …”, “It depends; however, caution is warranted …”                                             |
+| **2** | **Ethical Justification**             | • Coherent ethical reasoning (utilitarian, deontological, rights-based, etc.) supporting the stance. <br>• Logical connection between principles and conclusion.                        | References to privacy rights, informed consent norms, public-interest benefits, or duty-based obligations.                                             |
+| **3** | **Public vs Private Distinction**     | • Explicit discussion of whether *public availability = consent*. <br>• Clarifies difference between legal terms of service and moral permission.                                       | “Accessibility does not waive moral responsibility …”, “Platform TOS grants legal use, but ethically …”                                                |
+| **4** | **Risk / Harm Analysis & Mitigation** | • Identifies realistic risks (re-identification, bias amplification, surveillance creep). <br>• Proposes concrete mitigation (anonymization, differential privacy, opt-out mechanisms). | “Even with public data, de-identification is needed to prevent doxxing …”, “Bias audits should be performed.”                                          |
+| **5** | **Engagement with Opposing Views**    | • Presents one or more good-faith counterarguments. <br>• Offers reasoned rebuttal that preserves the original stance.                                                                  | Cites viewpoints such as “public posters should expect reuse” or “ML benefits society,” then explains why these do or don’t override privacy concerns. |
+| **6** | **Structure & Coherence**             | • Clear intro–body–conclusion. <br>• Logical progression and smooth transitions. <br>• Minimal grammar or clarity issues.                                                               | Well-labeled sections, topic sentences, summary paragraph reaffirming thesis.                                                                          |
+
+**How to apply the rubric**
+
+1. **Scan for thesis** – locate and record the author’s stated position.
+2. **Trace reasoning** – highlight ethical principles and check they support the thesis.
+3. **Check public/private analysis** – ensure the writer weighs consent versus accessibility.
+4. **List risks & mitigations** – note if both are present and realistically framed.
+5. **Identify counterarguments** – verify they are articulated and directly addressed.
+6. **Assess writing quality** – judge overall clarity and organization.
+
+Use the table as a checklist; a strong submission meets all six criteria, while gaps pinpoint areas for feedback or deduction.
