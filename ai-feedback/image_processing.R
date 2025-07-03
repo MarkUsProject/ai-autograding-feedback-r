@@ -4,12 +4,7 @@ install_if_missing(c("base64enc", "magick"))
 library(base64enc)
 library(magick)
 source("ai-feedback/helpers/constants.R")
-
-# Source required helper functions  
-script_dir <- tryCatch({
-  dirname(sys.frame(1)$ofile)
-}, error = function(e) ".")
-source(file.path(script_dir, "helpers", "template_utils.R"))
+source("ai-feedback/helpers/template_utils.R")
 
 encode_image <- function(image_path) {
   base64encode(image_path)
