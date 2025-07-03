@@ -1,11 +1,7 @@
 # main.R
-source("ai-feedback/helpers/install_dependencies.R")
 source("ai-feedback/image_processing.R")
 source("ai-feedback/code_processing.R")
 source("ai-feedback/text_processing.R")
-
-packages <- c("optparse", "jsonlite")
-install_if_missing(packages)
 
 # Load required libraries
 suppressWarnings(suppressMessages({

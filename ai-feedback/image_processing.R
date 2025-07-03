@@ -1,6 +1,4 @@
 # helpers/process_code.R
-source("ai-feedback/helpers/install_dependencies.R")
-install_if_missing(c("base64enc", "magick"))
 library(base64enc)
 library(magick)
 source("ai-feedback/helpers/constants.R")

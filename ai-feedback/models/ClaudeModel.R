@@ -1,5 +1,4 @@
-source("ai-feedback/helpers/install_dependencies.R")
-install_if_missing(c("httr", "jsonlite", "dotenv", "R6"))
+# ClaudeModel.R
 
 library(httr)
 library(jsonlite)
@@ -39,13 +38,6 @@ ClaudeModel <- R6Class("ClaudeModel",
       #' @return List with prompt and response text, or NULL if failed
 
       request <- ""
-      if (!is.null(question_num)) {
-        request <- paste0(
-          "Identify and generate a response for the mistakes **only** in question/task ",
-          question_num,
-          ". "
-        )
-      }
       request <- paste0(request, prompt)
 
       body <- toJSON(list(
@@ -59,8 +51,8 @@ ClaudeModel <- R6Class("ClaudeModel",
       ), auto_unbox = TRUE)
 
       headers <- add_headers(
-        Authorization = paste("Bearer", self$api_key),
-        `Content-Type` = "application/json",
+        `x-api-key` = self$api_key,
+        `content-type` = "application/json",
         `anthropic-version` = "2023-06-01"
       )
 
@@ -68,12 +60,12 @@ ClaudeModel <- R6Class("ClaudeModel",
         url = "https://api.anthropic.com/v1/messages",
         body = body,
         encode = "raw",
-        headers
+        config=headers
       )
 
       if (res$status_code != 200) {
-        warning("Claude API call failed: ", content(res, "text"))
-        return(NULL)
+        stop(sprintf("Claude API call failed [HTTP %s]: %s",
+                    res$status_code, content(res, "text")))
       }
 
       parsed <- content(res, as = "parsed", type = "application/json")
