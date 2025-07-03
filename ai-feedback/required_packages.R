@@ -4,7 +4,6 @@ source("ai-feedback/helpers/install_dependencies.R")
 # List of required packages
 required_packages <- c(
   "optparse",
-  "jsonlite",
   "magick",
   "base64enc",
   "jsonlite",
@@ -12,7 +11,7 @@ required_packages <- c(
   "tools",
   "httr",
   "dotenv",
-  "R6",
+  "R6"
 )
 
 install_dependencies(required_packages)
