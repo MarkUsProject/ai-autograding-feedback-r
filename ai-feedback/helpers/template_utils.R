@@ -76,8 +76,6 @@ render_prompt_template <- function(
     }
   }
   
-  # Check for remaining placeholders and crash if found (matching Python behavior)
-  # Only match simple template placeholders like {word} or {word_name}, not complex content
   remaining_placeholders <- regmatches(result, gregexpr("\\{[a-zA-Z_][a-zA-Z0-9_]*\\}", result))[[1]]
   if (length(remaining_placeholders) > 0) {
     stop("Missing placeholders in template: ", paste(remaining_placeholders, collapse = ", "))
@@ -306,8 +304,6 @@ get_question_contents <- function(file_paths, question_num) {
 #' 
 #' @return Character string with question context
 gather_image_context <- function(output_directory, question) {
-  # Placeholder implementation
-  # In the Python version, this reads context from extracted notebook cells
   tryCatch({
     context_file <- file.path(output_directory, question, "context.txt")
     if (file.exists(context_file)) {
