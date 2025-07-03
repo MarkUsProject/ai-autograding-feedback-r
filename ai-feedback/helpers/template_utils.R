@@ -9,7 +9,6 @@ library(pdftools)
 #' @param submission Path to student's submission file
 #' @param solution Path to instructor's solution file (optional)
 #' @param test_output Path to test output file (optional)
-#' @param question_num Question number to extract (optional)
 #' @param has_submission_image Whether submission image is present
 #' @param has_solution_image Whether solution image is present
 #' @param ... Additional key-value pairs for placeholder replacement
@@ -20,7 +19,6 @@ render_prompt_template <- function(
   submission = NULL,
   solution = NULL,
   test_output = NULL,
-  question_num = NULL,
   has_submission_image = FALSE,
   has_solution_image = FALSE,
   ...
@@ -38,12 +36,7 @@ render_prompt_template <- function(
   if (grepl("\\{file_contents\\}", prompt_content)) {
     files_to_process <- list(submission, solution, test_output)
     files_to_process <- files_to_process[!sapply(files_to_process, is.null)]
-    
-    if (!is.null(question_num)) {
-      template_data$file_contents <- get_question_contents(files_to_process, question_num)
-    } else {
-      template_data$file_contents <- gather_file_contents(files_to_process)
-    }
+    template_data$file_contents <- gather_file_contents(files_to_process)
   }
   
   # Handle image placeholders
@@ -133,7 +126,7 @@ gather_file_contents <- function(file_paths) {
         
         for (i in seq_along(lines)) {
           stripped_line <- trimws(lines[i], which = "right")
-          if (nzchar(trimws(stripped_line))) {
+          if (nzchar(stripped_line)) {
             file_contents <- paste0(file_contents, "(Line ", i, ") ", stripped_line, "\n")
           } else {
             file_contents <- paste0(file_contents, "(Line ", i, ") \n")
@@ -148,7 +141,7 @@ gather_file_contents <- function(file_paths) {
         
         for (i in seq_along(lines)) {
           stripped_line <- trimws(lines[i], which = "right")
-          if (nzchar(trimws(stripped_line))) {
+          if (nzchar(stripped_line)) {
             file_contents <- paste0(file_contents, "(Line ", i, ") ", stripped_line, "\n")
           } else {
             file_contents <- paste0(file_contents, "(Line ", i, ") ", lines[i], "\n")
@@ -179,122 +172,6 @@ extract_pdf_text <- function(pdf_path) {
     cat("Error extracting text from PDF", basename(pdf_path), ":", e$message, "\n")
     return(paste0("[Error: Could not extract text from PDF ", basename(pdf_path), "]"))
   })
-}
-
-#' Extract question-specific contents from files
-#'
-#' @param file_paths List of file paths to process
-#' @param question_num Question number to extract
-#' 
-#' @return Character string with question-specific contents
-get_question_contents <- function(file_paths, question_num) {
-  # Implementation for question-specific extraction
-  # Looks for markdown-style headers like "## Task 1" or "## Question 1"
-  
-  question_contents <- ""
-  
-  for (file_path in file_paths) {
-    if (is.null(file_path) || !file.exists(file_path)) {
-      next
-    }
-    
-    filename <- basename(file_path)
-    
-    tryCatch({
-      if (grepl("\\.pdf$", filename, ignore.case = TRUE)) {
-        # For PDFs, extract all text and add a note
-        text_content <- extract_pdf_text(file_path)
-        question_contents <- paste0(question_contents, "=== ", filename, " (Question ", question_num, ") ===\n")
-        question_contents <- paste0(question_contents, "[Note: PDF content - question-specific extraction not implemented]\n")
-        question_contents <- paste0(question_contents, text_content, "\n\n")
-      } else {
-        # For text files, look for question markers
-        lines <- readLines(file_path, warn = FALSE)
-        question_contents <- paste0(question_contents, "=== ", filename, " (Question ", question_num, ") ===\n")
-        
-        # Look for patterns like "## Task 1" or "## Question 1"
-        task_patterns <- c(
-          paste0("## Task ", question_num),
-          paste0("## Question ", question_num),
-          paste0("# Task ", question_num),
-          paste0("# Question ", question_num)
-        )
-        
-        intro_start <- NULL
-        task_start <- NULL
-        task_end <- length(lines)
-        
-        # Find introduction section
-        for (i in seq_along(lines)) {
-          if (grepl("^## Introduction", lines[i], ignore.case = TRUE)) {
-            intro_start <- i
-            break
-          }
-        }
-        
-        # Find target task section
-        for (i in seq_along(lines)) {
-          for (pattern in task_patterns) {
-            if (grepl(paste0("^", pattern), lines[i], ignore.case = TRUE)) {
-              task_start <- i
-              break
-            }
-          }
-          if (!is.null(task_start)) break
-        }
-        
-        # Find end of task section (next ## header)
-        if (!is.null(task_start)) {
-          for (i in (task_start + 1):length(lines)) {
-            if (grepl("^##", lines[i])) {
-              task_end <- i - 1
-              break
-            }
-          }
-        }
-        
-        # Extract and format content
-        line_num <- 1
-        
-        # Add introduction if found
-        if (!is.null(intro_start)) {
-          intro_end <- if (!is.null(task_start)) min(task_start - 1, length(lines)) else length(lines)
-          for (i in intro_start:intro_end) {
-            if (i <= length(lines)) {
-              stripped_line <- trimws(lines[i], which = "right")
-              question_contents <- paste0(question_contents, "(Line ", line_num, ") ", stripped_line, "\n")
-              line_num <- line_num + 1
-            }
-          }
-        }
-        
-        # Add task content if found
-        if (!is.null(task_start)) {
-          for (i in task_start:task_end) {
-            if (i <= length(lines)) {
-              stripped_line <- trimws(lines[i], which = "right")
-              question_contents <- paste0(question_contents, "(Line ", line_num, ") ", stripped_line, "\n")
-              line_num <- line_num + 1
-            }
-          }
-        } else {
-          # If no specific task found, include a note and all content
-          question_contents <- paste0(question_contents, "[Note: Task ", question_num, " not found, showing all content]\n")
-          for (i in seq_along(lines)) {
-            stripped_line <- trimws(lines[i], which = "right")
-            question_contents <- paste0(question_contents, "(Line ", i, ") ", stripped_line, "\n")
-          }
-        }
-        
-        question_contents <- paste0(question_contents, "\n")
-      }
-      
-    }, error = function(e) {
-      cat("Error processing file", filename, "for question", question_num, ":", e$message, "\n")
-    })
-  }
-  
-  return(question_contents)
 }
 
 #' Gather image context for image-based prompts
