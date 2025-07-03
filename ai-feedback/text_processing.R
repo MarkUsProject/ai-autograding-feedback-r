@@ -1,5 +1,8 @@
-# text_processing.R
-source("ai-feedback/helpers/constants.R")
+# Source required helper functions
+script_dir <- tryCatch({
+  dirname(sys.frame(1)$ofile)
+}, error = function(e) ".")
+source(file.path(script_dir, "helpers", "template_utils.R"))
 
 #' Process text-based submissions and generate model feedback.
 #'
