@@ -5,7 +5,7 @@ if (!dir.exists(Sys.getenv("R_LIBS_USER"))) {
 }
 .libPaths(Sys.getenv("R_LIBS_USER"))
 
-install_if_missing <- function(packages) {
+install_dependencies <- function(packages) {
   for (pkg in packages) {
     if (!requireNamespace(pkg, quietly = TRUE)) {
       install.packages(pkg, repos = "https://cloud.r-project.org", lib = Sys.getenv("R_LIBS_USER"))

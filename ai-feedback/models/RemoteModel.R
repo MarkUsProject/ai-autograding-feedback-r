@@ -1,6 +1,4 @@
-# Load required libraries
-source("ai-feedback/helpers/install_dependencies.R")
-install_if_missing(c("httr", "jsonlite", "dotenv", "R6"))
+# RemoteModel.R
 
 library(httr)
 library(jsonlite)
@@ -73,8 +71,8 @@ RemoteModel <- R6Class("RemoteModel",
 
       response <- POST(url = self$remote_url, body = body, encode = "multipart", headers)
       if (response$status_code != 200) {
-        warning("Failed to get a valid response from server")
-        return(NULL)
+        stop(sprintf("Remote API call failed [HTTP %s]: %s",
+                     response$status_code, content(response, "text")))
       }
 
       parsed <- content(response, as = "parsed", type = "application/json")
