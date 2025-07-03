@@ -41,8 +41,7 @@ process_text <- function(args, prompt, system_instructions) {
     prompt,
     submission = submission_file,
     solution = solution_file,
-    test_output = test_output_file,
-    question_num = args$question
+    test_output = test_output_file
   )
 
   model_class <- model_mapping[[args$model]]
@@ -56,26 +55,14 @@ process_text <- function(args, prompt, system_instructions) {
     model <- model_class$new()
   }
 
-  if (!is.null(args$question)) {
-    result <- model$generate_response(
-      prompt = prompt,
-      submission_file = submission_file,
-      solution_file = solution_file,
-      scope = args$scope,
-      question_num = args$question,
-      system_instructions = system_instructions,
-      llama_mode = args$llama_mode
-    )
-  } else {
-    result <- model$generate_response(
-      prompt = prompt,
-      submission_file = submission_file,
-      solution_file = solution_file,
-      scope = args$scope,
-      system_instructions = system_instructions,
-      llama_mode = args$llama_mode
-    )
-  }
+  result <- model$generate_response(
+    prompt = prompt,
+    submission_file = submission_file,
+    solution_file = solution_file,
+    scope = args$scope,
+    system_instructions = system_instructions,
+    llama_mode = args$llama_mode
+  )
 
   return(result)
 }

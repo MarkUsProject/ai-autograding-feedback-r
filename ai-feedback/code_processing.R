@@ -6,8 +6,7 @@ source("ai-feedback/helpers/template_utils.R")
 #'
 #' This function loads the submission, solution, and test output files,
 #' constructs a prompt using the template system, and dispatches to the
-#' appropriate model to generate a feedback response. It supports code
-#' evaluation with or without a specific question target.
+#' appropriate model to generate a feedback response.
 #'
 #' @param args A list of input arguments including submission path, model name,
 #'        scope, solution path, optional question, and test output file.
@@ -17,7 +16,7 @@ source("ai-feedback/helpers/template_utils.R")
 #' @return A list of two elements: the full request string and the model's response.
 #'
 #' @examples
-#' result <- process_text(args, prompt, system_instructions)
+#' result <- process_code(args, prompt, system_instructions)
 process_code <- function(args, prompt, system_instructions) {
   if (!file.exists(args$submission)) {
     stop(paste("Submission file not found:", args$submission))
@@ -44,8 +43,7 @@ process_code <- function(args, prompt, system_instructions) {
     prompt,
     submission = submission_file,
     solution = solution_file,
-    test_output = test_output_file,
-    question_num = args$question
+    test_output = test_output_file
   )
 
   model_class <- model_mapping[[args$model]]
@@ -59,28 +57,14 @@ process_code <- function(args, prompt, system_instructions) {
     model <- model_class$new()
   }
 
-  if (args$scope == "code") {
-    if (!is.null(args$question)) {
-      result <- model$generate_response(
-        prompt = prompt,
-        submission_file = submission_file,
-        solution_file = solution_file,
-        test_output = test_output_file,
-        question_num = args$question,
-        system_instructions = system_instructions,
-        llama_mode = args$llama_mode
-      )
-    } else {
-      result <- model$generate_response(
-        prompt = prompt,
-        submission_file = submission_file,
-        solution_file = solution_file,
-        test_output = test_output_file,
-        system_instructions = system_instructions,
-        llama_mode = args$llama_mode
-      )
-    }
-  }
+  result <- model$generate_response(
+    prompt = prompt,
+    submission_file = submission_file,
+    solution_file = solution_file,
+    test_output = test_output_file,
+    system_instructions = system_instructions,
+    llama_mode = args$llama_mode
+  )
 
   return(result)
 }
