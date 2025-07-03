@@ -59,8 +59,8 @@ ClaudeModel <- R6Class("ClaudeModel",
       ), auto_unbox = TRUE)
 
       headers <- add_headers(
-        Authorization = paste("Bearer", self$api_key),
-        `Content-Type` = "application/json",
+        `x-api-key` = self$api_key,
+        `content-type` = "application/json",
         `anthropic-version` = "2023-06-01"
       )
 
@@ -68,7 +68,7 @@ ClaudeModel <- R6Class("ClaudeModel",
         url = "https://api.anthropic.com/v1/messages",
         body = body,
         encode = "raw",
-        headers
+        config=headers
       )
 
       if (res$status_code != 200) {
