@@ -1,5 +1,6 @@
 # text_processing.R
 source("ai-feedback/helpers/constants.R")
+source("ai-feedback/helpers/template_utils.R")
 
 #' Process text-based submissions and generate model feedback.
 #'
@@ -36,13 +37,12 @@ process_text <- function(args, prompt, system_instructions) {
     test_output_file <- args$test_output
   }
 
-  # prompt <- render_prompt_template(
-  #   prompt,
-  #   submission = submission_file,
-  #   solution = solution_file,
-  #   test_output = test_output_file,
-  #   question_num = args$question
-  # )
+  prompt <- render_prompt_template(
+    prompt,
+    submission = submission_file,
+    solution = solution_file,
+    test_output = test_output_file
+  )
 
   model_class <- model_mapping[[args$model]]
   if (is.null(model_class)) {
@@ -55,26 +55,14 @@ process_text <- function(args, prompt, system_instructions) {
     model <- model_class$new()
   }
 
-  if (!is.null(args$question)) {
-    result <- model$generate_response(
-      prompt = prompt,
-      submission_file = submission_file,
-      solution_file = solution_file,
-      scope = args$scope,
-      question_num = args$question,
-      system_instructions = system_instructions,
-      llama_mode = args$llama_mode
-    )
-  } else {
-    result <- model$generate_response(
-      prompt = prompt,
-      submission_file = submission_file,
-      solution_file = solution_file,
-      scope = args$scope,
-      system_instructions = system_instructions,
-      llama_mode = args$llama_mode
-    )
-  }
+  result <- model$generate_response(
+    prompt = prompt,
+    submission_file = submission_file,
+    solution_file = solution_file,
+    scope = args$scope,
+    system_instructions = system_instructions,
+    llama_mode = args$llama_mode
+  )
 
   return(result)
 }

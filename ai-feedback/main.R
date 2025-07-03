@@ -15,13 +15,13 @@ load_markdown_prompt <- function(prompt_name, script_dir) {
   if (!file.exists(prompt_file)) stop(paste("Error: Prompt file not found:", prompt_file))
   list(prompt_content = paste(readLines(prompt_file), collapse = "\n"))
 }
+
 # Load markdown output template
 load_markdown_template <- function(template, script_dir) {
   template_file <- file.path(script_dir, "data", "output", paste0(template, ".md"))
   if (!file.exists(template_file)) stop(paste("Error: Template file not found:", template_file))
   paste(readLines(template_file), collapse = "\n")
 }
-
 
 get_script_dir <- function() {
   # Detect script path whether using Rscript or source()
@@ -33,7 +33,6 @@ get_script_dir <- function() {
     return(dirname(normalizePath(sys.frames()[[1]]$ofile)))
   }
 }
-
 
 main <- function() {
   option_list <- list(

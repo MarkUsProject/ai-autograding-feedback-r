@@ -2,7 +2,7 @@
 library(base64enc)
 library(magick)
 source("ai-feedback/helpers/constants.R")
-
+source("ai-feedback/helpers/template_utils.R")
 
 encode_image <- function(image_path) {
   base64encode(image_path)
