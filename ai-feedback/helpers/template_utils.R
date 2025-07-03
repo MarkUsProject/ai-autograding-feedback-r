@@ -77,7 +77,8 @@ render_prompt_template <- function(
   }
   
   # Check for remaining placeholders and crash if found (matching Python behavior)
-  remaining_placeholders <- regmatches(result, gregexpr("\\{[^}]+\\}", result))[[1]]
+  # Only match simple template placeholders like {word} or {word_name}, not complex content
+  remaining_placeholders <- regmatches(result, gregexpr("\\{[a-zA-Z_][a-zA-Z0-9_]*\\}", result))[[1]]
   if (length(remaining_placeholders) > 0) {
     stop("Missing placeholders in template: ", paste(remaining_placeholders, collapse = ", "))
   }
