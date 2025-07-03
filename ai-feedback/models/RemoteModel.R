@@ -1,6 +1,4 @@
-# Load required libraries
-source("ai-feedback/helpers/install_dependencies.R")
-install_if_missing(c("httr", "jsonlite", "dotenv", "R6"))
+# RemoteModel.R
 
 library(httr)
 library(jsonlite)

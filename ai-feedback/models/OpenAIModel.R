@@ -1,5 +1,4 @@
-source("ai-feedback/helpers/install_dependencies.R")
-install_if_missing(c("httr", "jsonlite", "dotenv", "R6"))
+# OpenAIModel.R
 
 library(httr)
 library(jsonlite)
