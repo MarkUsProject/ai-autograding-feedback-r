@@ -25,13 +25,26 @@ RemoteModel <- R6Class("RemoteModel",
 
     generate_response = function(
       prompt,
+      submission_file,
       system_instructions,
+      solution_file = NULL,
+      question_num = NULL,
+      test_output = NULL,
+      scope = NULL,
+      llama_mode = NULL,
       submission_image = NULL
     ) {
       #' Generate a model response using the prompt and optional file paths.
       #'
       #' @param prompt A character string prompt for the model
+      #' @param submission_file Path to the student's submission
       #' @param system_instructions System-level model instructions
+      #' @param solution_file Optional path to solution file
+      #' @param question_num Optional question number
+      #' @param test_output Optional path to test output
+      #' @param scope Optional string to define task scope
+      #' @param llama_mode Optional llama-specific mode
+      #' @param submission_image Optional path to image to include
       #' @return A list with prompt and model response text, or NULL if failed
 
       api_key <- Sys.getenv("REMOTE_API_KEY")
@@ -45,6 +58,16 @@ RemoteModel <- R6Class("RemoteModel",
         model = self$model_name,
         system_instructions = system_instructions
       )
+      if (!is.null(llama_mode)) {
+        body$llama_mode <- llama_mode
+      }
+
+      files <- NULL
+      if (!is.null(submission_image)) {
+        file_name <- basename(submission_image)
+        files <- upload_file(submission_image)
+        body[[file_name]] <- files
+      }
 
       response <- POST(url = self$remote_url, body = body, encode = "multipart", headers)
       if (response$status_code != 200) {
