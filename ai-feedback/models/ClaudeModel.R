@@ -1,9 +1,8 @@
-# ClaudeModel.R
-
 library(httr)
 library(jsonlite)
 library(dotenv)
 library(R6)
+library(base64enc)
 
 load_dot_env()
 
@@ -11,9 +10,7 @@ ClaudeModel <- R6Class("ClaudeModel",
   public = list(
     api_key = NULL,
     model_name = "claude-3-7-sonnet-20250219",
-
     initialize = function() {
-      #' Initializes ClaudeModel with the Anthropic API key.
       self$api_key <- Sys.getenv("CLAUDE_API_KEY")
       if (self$api_key == "") {
         stop("CLAUDE_API_KEY not set in environment variables.")
@@ -22,23 +19,37 @@ ClaudeModel <- R6Class("ClaudeModel",
 
     generate_response = function(
       prompt,
-      submission_file,
       system_instructions,
-      solution_file = NULL,
-      scope = NULL,
-      question_num = NULL,
-      test_output = NULL,
-      llama_mode = NULL
+      submission_image = NULL,
+      solution_image = NULL
     ) {
-      #' Generates a Claude response for the provided prompt and context.
-      #'
-      #' @param prompt Prompt string from user
-      #' @param system_instructions Model's system prompt
-      #' @param question_num Optional question/task number to focus on
-      #' @return List with prompt and response text, or NULL if failed
+      #' Generate a Claude response, optionally including submission and solution images.
 
-      request <- ""
-      request <- paste0(request, prompt)
+      # Build the content blocks (text + image if present)
+      content_blocks <- list(
+        list(type = "text", text = prompt)
+      )
+
+      # Helper: wrap base64-encoded image as Claude image block
+      encode_image_block <- function(image_path) {
+        encoded <- base64encode(image_path)
+        list(
+          type = "image",
+          source = list(
+            type = "base64",
+            media_type = "image/png",  # Change if not PNG
+            data = encoded
+          )
+        )
+      }
+
+      # Append images if available
+      if (!is.null(submission_image)) {
+        content_blocks <- append(content_blocks, list(encode_image_block(submission_image)))
+      }
+      if (!is.null(solution_image)) {
+        content_blocks <- append(content_blocks, list(encode_image_block(solution_image)))
+      }
 
       body <- toJSON(list(
         model = self$model_name,
@@ -46,7 +57,7 @@ ClaudeModel <- R6Class("ClaudeModel",
         temperature = 0.5,
         system = system_instructions,
         messages = list(
-          list(role = "user", content = request)
+          list(role = "user", content = content_blocks)
         )
       ), auto_unbox = TRUE)
 
@@ -60,12 +71,12 @@ ClaudeModel <- R6Class("ClaudeModel",
         url = "https://api.anthropic.com/v1/messages",
         body = body,
         encode = "raw",
-        config=headers
+        config = headers
       )
 
       if (res$status_code != 200) {
         stop(sprintf("Claude API call failed [HTTP %s]: %s",
-                    res$status_code, content(res, "text")))
+                     res$status_code, content(res, "text")))
       }
 
       parsed <- content(res, as = "parsed", type = "application/json")
