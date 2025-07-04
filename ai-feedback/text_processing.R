@@ -37,7 +37,14 @@ process_text <- function(args, prompt, system_instructions) {
     test_output_file <- args$test_output
   }
 
-  prompt <- render_prompt_template(prompt=prompt, system_instructions = system_instructions)
+  # Pass file paths to template renderer
+  prompt <- render_prompt_template(
+    prompt_content = prompt, 
+    submission = submission_file,
+    solution = solution_file,
+    test_output = test_output_file,
+    system_instructions = system_instructions
+  )
 
   model_class <- model_mapping[[args$model]]
   if (is.null(model_class)) {
