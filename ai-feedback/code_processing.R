@@ -40,7 +40,7 @@ process_code <- function(args, prompt, system_instructions) {
   }
 
   prompt <- render_prompt_template(
-    prompt_content = prompt,
+    prompt,
     submission = submission_file,
     solution = solution_file,
     test_output = test_output_file
@@ -51,18 +51,20 @@ process_code <- function(args, prompt, system_instructions) {
     stop("Invalid model selected for code scope.")
   }
 
-  if (identical(model_class, RemoteModel) && !is.null(args$remote_model) && args$remote_model != "") {
+  if (model_class$name == "RemoteModel" && !is.null(args$remote_model)) {
     model <- model_class$new(model_name = args$remote_model)
   } else {
     model <- model_class$new()
   }
 
-  combined_prompt <- paste0(
-    "System Instructions:\n", system_instructions, "\n\n",
-    "User Prompt:\n", prompt
+  result <- model$generate_response(
+    prompt = prompt,
+    submission_file = submission_file,
+    solution_file = solution_file,
+    test_output = test_output_file,
+    system_instructions = system_instructions,
+    llama_mode = args$llama_mode
   )
 
-  result <- model$generate_response(prompt = prompt, system_instructions = system_instructions)
-
-  return(list(combined_prompt, result$response))
+  return(result)
 }
