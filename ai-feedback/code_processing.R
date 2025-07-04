@@ -40,7 +40,7 @@ process_code <- function(args, prompt, system_instructions) {
   }
 
   prompt <- render_prompt_template(
-    prompt,
+    prompt_content = prompt,
     submission = submission_file,
     solution = solution_file,
     test_output = test_output_file

@@ -71,7 +71,7 @@ process_image <- function(args, prompt, system_instructions) {
     }
 
     rendered_prompt <- render_prompt_template(
-      prompt_content,
+      prompt_content = prompt_content,
       submission = submission_file,
       solution = solution_file,
       has_submission_image = grepl("\\{submission_image\\}", prompt_content),
