@@ -57,10 +57,12 @@ process_code <- function(args, prompt, system_instructions) {
     model <- model_class$new()
   }
 
-  result <- model$generate_response(
-    prompt = prompt,
-    system_instructions = system_instructions
+  combined_prompt <- paste0(
+    "System Instructions:\n", system_instructions, "\n\n",
+    "User Prompt:\n", prompt
   )
 
-  return(result)
+  result <- model$generate_response(prompt = prompt, system_instructions = system_instructions)
+
+  return(list(combined_prompt, result$response))
 }
