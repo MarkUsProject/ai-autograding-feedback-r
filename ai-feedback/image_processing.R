@@ -19,6 +19,7 @@ process_image <- function(args, prompt, system_instructions) {
   if (grepl("\\{context\\}", prompt_content)) {
     context <- "(Context placeholder)"
     prompt_content <- gsub("\\{context\\}", paste0("```\n", context, "\n```"), prompt_content)
+<<<<<<< HEAD
   }
 
   # Replace {image_size} placeholder
@@ -49,6 +50,39 @@ process_image <- function(args, prompt, system_instructions) {
     stop("Invalid model selected for code scope.")
   }
 
+=======
+  }
+
+  # Replace {image_size} placeholder
+  if (grepl("\\{image_size\\}", prompt_content)) {
+    img <- image_read(args$submission_image)
+    size <- image_info(img)
+    prompt_content <- gsub("\\{image_size\\}", paste(size$width, "by", size$height), prompt_content)
+  }
+
+  # Render final prompt with dynamic file content placeholders
+  rendered_prompt <- render_prompt_template(
+    prompt_content,
+    submission = submission_file,
+    solution = solution_file,
+    has_submission_image = grepl("\\{submission_image\\}", prompt_content),
+    has_solution_image = grepl("\\{solution_image\\}", prompt_content)
+  )
+
+
+  # Build prompt image list for OpenAI
+  submission_image <- if (grepl("\\{submission_image\\}", prompt_content)) args$submission_image else NULL
+  solution_image <- if (grepl("\\{solution_image\\}", prompt_content)) args$solution_image else NULL
+
+  request_text <- paste0(rendered_prompt, "\n\n",
+                         paste(na.omit(c(submission_image, solution_image)), collapse = ", "))
+
+  model_class <- model_mapping[[args$model]]
+  if (is.null(model_class)) {
+    stop("Invalid model selected for code scope.")
+  }
+
+>>>>>>> add-tests
   if (identical(model_class, RemoteModel) && !is.null(args$remote_model) && args$remote_model != "") {
     model <- model_class$new(model_name = args$remote_model)
   } else {
