@@ -57,6 +57,12 @@ process_text <- function(args, prompt, system_instructions) {
     model <- model_class$new()
   }
 
+  combined_prompt <- paste0(
+    "System Instructions:\n", system_instructions, "\n\n",
+    "User Prompt:\n", prompt
+  )
+
   result <- model$generate_response(prompt = prompt, system_instructions = system_instructions)
-  return(result)
+
+  return(list(combined_prompt, result$response))
 }

@@ -26,30 +26,29 @@ tests <- list(
       solution = "test_submissions/sta130_code_example/solution.R",
       output = "output/test_sta_130_code_openai.md"
     )
+  ),
+  list(
+    name = "Code Scope - Claude",
+    params = list(
+      scope = "code",
+      model = "claude",
+      prompt = "code_table",
+      submission = "test_submissions/sta130_code_example/fail_submission/fail_submission.R",
+      solution = "test_submissions/sta130_code_example/solution.R",
+      output = "output/test_sta_130_code_claude.md"
+    )
+  ),
+  list(
+    name = "Code Scope - Remote",
+    params = list(
+      scope = "code",
+      model = "remote",
+      prompt = "code_table",
+      submission = "test_submissions/sta130_code_example/fail_submission/fail_submission.R",
+      solution = "test_submissions/sta130_code_example/solution.R",
+      output = "output/test_sta_130_code_remote.md"
+    )
   )
-  #,
-  # list(
-  #   name = "Code Scope - Claude",
-  #   params = list(
-  #     scope = "code",
-  #     model = "claude",
-  #     prompt = "code_table",
-  #     submission = "test_submissions/sta130_code_example/fail_submission/fail_submission.R",
-  #     solution = "test_submissions/sta130_code_example/solution.R",
-  #     output = "output/test_sta_130_code_claude.md"
-  #   )
-  # ),
-  # list(
-  #   name = "Code Scope - Remote",
-  #   params = list(
-  #     scope = "code",
-  #     model = "remote",
-  #     prompt = "code_table",
-  #     submission = "test_submissions/sta130_code_example/fail_submission/fail_submission.R",
-  #     solution = "test_submissions/sta130_code_example/solution.R",
-  #     output = "output/test_sta_130_code_remote.md"
-  #   )
-  # )
 )
 
 # Run test cases
