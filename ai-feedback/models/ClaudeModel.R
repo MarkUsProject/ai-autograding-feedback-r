@@ -22,19 +22,12 @@ ClaudeModel <- R6Class("ClaudeModel",
 
     generate_response = function(
       prompt,
-      submission_file,
-      system_instructions,
-      solution_file = NULL,
-      scope = NULL,
-      question_num = NULL,
-      test_output = NULL,
-      llama_mode = NULL
+      system_instructions
     ) {
       #' Generates a Claude response for the provided prompt and context.
       #'
       #' @param prompt Prompt string from user
       #' @param system_instructions Model's system prompt
-      #' @param question_num Optional question/task number to focus on
       #' @return List with prompt and response text, or NULL if failed
 
       request <- ""

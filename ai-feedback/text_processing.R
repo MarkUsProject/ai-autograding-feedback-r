@@ -37,32 +37,19 @@ process_text <- function(args, prompt, system_instructions) {
     test_output_file <- args$test_output
   }
 
-  prompt <- render_prompt_template(
-    prompt,
-    submission = submission_file,
-    solution = solution_file,
-    test_output = test_output_file
-  )
+  prompt <- render_prompt_template(prompt=prompt, system_instructions = system_instructions)
 
   model_class <- model_mapping[[args$model]]
   if (is.null(model_class)) {
     stop("Invalid model selected for text scope.")
   }
 
-  if (model_class$name == "RemoteModel" && !is.null(args$remote_model)) {
+  if (identical(model_class, RemoteModel) && !is.null(args$remote_model) && args$remote_model != "") {
     model <- model_class$new(model_name = args$remote_model)
   } else {
     model <- model_class$new()
   }
 
-  result <- model$generate_response(
-    prompt = prompt,
-    submission_file = submission_file,
-    solution_file = solution_file,
-    scope = args$scope,
-    system_instructions = system_instructions,
-    llama_mode = args$llama_mode
-  )
-
+  result <- model$generate_response(prompt = prompt, system_instructions = system_instructions)
   return(result)
 }

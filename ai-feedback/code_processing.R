@@ -51,7 +51,7 @@ process_code <- function(args, prompt, system_instructions) {
     stop("Invalid model selected for code scope.")
   }
 
-  if (model_class$name == "RemoteModel" && !is.null(args$remote_model)) {
+  if (identical(model_class, RemoteModel) && !is.null(args$remote_model) && args$remote_model != "") {
     model <- model_class$new(model_name = args$remote_model)
   } else {
     model <- model_class$new()
@@ -59,11 +59,7 @@ process_code <- function(args, prompt, system_instructions) {
 
   result <- model$generate_response(
     prompt = prompt,
-    submission_file = submission_file,
-    solution_file = solution_file,
-    test_output = test_output_file,
-    system_instructions = system_instructions,
-    llama_mode = args$llama_mode
+    system_instructions = system_instructions
   )
 
   return(result)
