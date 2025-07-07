@@ -159,23 +159,3 @@ extract_pdf_text <- function(pdf_path) {
     return(paste0("[Error: Could not extract text from PDF ", basename(pdf_path), "]"))
   })
 }
-
-#' Gather image context for image-based prompts
-#'
-#' @param output_directory Directory containing extracted images
-#' @param question Question identifier
-#' 
-#' @return Character string with question context
-gather_image_context <- function(output_directory, question) {
-  tryCatch({
-    context_file <- file.path(output_directory, question, "context.txt")
-    if (file.exists(context_file)) {
-      return(paste(readLines(context_file), collapse = "\n"))
-    } else {
-      return(paste("Context for question", question))
-    }
-  }, error = function(e) {
-    cat("Error reading question context:", e$message, "\n")
-    return("")
-  })
-}
