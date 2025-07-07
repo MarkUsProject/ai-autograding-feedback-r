@@ -62,7 +62,7 @@ process_image <- function(args, prompt, system_instructions) {
 
   model_class <- model_mapping[[args$model]]
   if (is.null(model_class)) {
-    stop("Invalid model selected for code scope.")
+    stop("Invalid model selected for image scope.")
   }
 
   if (identical(model_class, RemoteModel) && !is.null(args$remote_model) && args$remote_model != "") {
