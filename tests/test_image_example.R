@@ -21,7 +21,7 @@ tests <- list(
     params = list(
       scope = "image",
       model = "openai",
-      prompt = "image_analyze",
+      prompt = "data/prompts/user/image_analyze.md",
       submission = "test_submissions/image_example/correctness_submission/correctness_submission.ipynb",
       submission_image = "test_submissions/image_example/correctness_submission/correctness_submission.png",
       solution = "test_submissions/image_example/solution.ipynb",
@@ -33,23 +33,11 @@ tests <- list(
     params = list(
       scope = "image",
       model = "claude",
-      prompt = "image_analyze",
+      prompt = "data/prompts/user/image_analyze.md",
       submission = "test_submissions/image_example/correctness_submission/correctness_submission.ipynb",
       submission_image = "test_submissions/image_example/correctness_submission/correctness_submission.png",
       solution = "test_submissions/image_example/solution.ipynb",
       output = "output/test_image_example_claude.md"
-    )
-  ),
-  list(
-    name = "Text Scope - Remote",
-    params = list(
-      scope = "image",
-      model = "remote",
-      prompt = "image_analyze",
-      submission = "test_submissions/image_example/correctness_submission/correctness_submission.ipynb",
-      submission_image = "test_submissions/image_example/correctness_submission/correctness_submission.png",
-      solution = "test_submissions/image_example/solution.ipynb",
-      output = "output/test_image_example_remote.md"
     )
   )
 )

@@ -22,7 +22,7 @@ tests <- list(
     params = list(
       scope = "text",
       model = "openai",
-      prompt = "text_pdf_analyze",
+      prompt = "data/prompts/user/text_pdf_analyze.md",
       submission = "test_submissions/pdf_example/student_pdf_submission.pdf",
       solution = "test_submissions/pdf_example/instructor_pdf_solution.pdf",
       output = "output/test_pdf_analyze_openai.md"
@@ -33,7 +33,7 @@ tests <- list(
     params = list(
       scope = "text",
       model = "claude",
-      prompt = "text_pdf_analyze",
+      prompt = "data/prompts/user/text_pdf_analyze.md",
       submission = "test_submissions/pdf_example/student_pdf_submission.pdf",
       solution = "test_submissions/pdf_example/instructor_pdf_solution.pdf",
       output = "output/test_pdf_analyze_claude.md"
@@ -44,7 +44,7 @@ tests <- list(
     params = list(
       scope = "text",
       model = "remote",
-      prompt = "text_pdf_analyze",
+      prompt = "data/prompts/user/text_pdf_analyze.md",
       submission = "test_submissions/pdf_example/student_pdf_submission.pdf",
       solution = "test_submissions/pdf_example/instructor_pdf_solution.pdf",
       output = "output/test_pdf_analyze_remote.md"

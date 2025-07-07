@@ -7,7 +7,7 @@ source("ai-feedback/helpers/template_utils.R")
 #' This function loads submission and solution files, constructs a prompt,
 #' and uses the selected model to generate a response.
 #'
-#' @param args A list of arguments (typically from command-line parsing).
+#' @param args A list of arguments
 #' @param prompt A string containing the prompt template.
 #' @param system_instructions A string of system-level instructions for the model.
 #'

@@ -21,7 +21,7 @@ tests <- list(
     params = list(
       scope = "code",
       model = "openai",
-      prompt = "code_table",
+      prompt = "data/prompts/user/code_table.md",
       submission = "test_submissions/sta130_code_example/fail_submission/fail_submission.R",
       solution = "test_submissions/sta130_code_example/solution.R",
       output = "output/test_sta_130_code_openai.md"
@@ -32,7 +32,7 @@ tests <- list(
     params = list(
       scope = "code",
       model = "claude",
-      prompt = "code_table",
+      prompt = "data/prompts/user/code_table.md",
       submission = "test_submissions/sta130_code_example/fail_submission/fail_submission.R",
       solution = "test_submissions/sta130_code_example/solution.R",
       output = "output/test_sta_130_code_claude.md"
@@ -43,7 +43,7 @@ tests <- list(
     params = list(
       scope = "code",
       model = "remote",
-      prompt = "code_table",
+      prompt = "data/prompts/user/code_table.md",
       submission = "test_submissions/sta130_code_example/fail_submission/fail_submission.R",
       solution = "test_submissions/sta130_code_example/solution.R",
       output = "output/test_sta_130_code_remote.md"

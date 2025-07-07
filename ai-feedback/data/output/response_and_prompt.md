@@ -1,6 +1,0 @@
-# Prompt
-
-{request}
-
-# Response
-{response}

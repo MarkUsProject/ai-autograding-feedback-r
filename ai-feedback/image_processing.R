@@ -7,15 +7,16 @@ source("ai-feedback/models/RemoteModel.R")
 
 process_image <- function(args, prompt, system_instructions) {
   submission_file <- args$submission
-  solution_file <- if (!is.null(args$solution)) {
-    args$solution
-  } else {
-    NULL
+  if (!is.null(args$solution)){
+    solution_file <- args$solution 
+  }else{
+    solution_file <- NULL
   }
 
-  if (!file.exists(submission_file)) {
+  if (!file.exists(submission_file)){
     stop("Submission file not found")
   }
+
   if (!is.null(solution_file) && !file.exists(solution_file)) {
     stop("Solution file not found")
   }
@@ -28,7 +29,7 @@ process_image <- function(args, prompt, system_instructions) {
     prompt_content <- gsub("\\{context\\}", paste0("```\n", context, "\n```"), prompt_content)
   }
 
-  # Replace {image_size} placeholder
+  # # Replace {image_size} placeholder
   if (grepl("\\{image_size\\}", prompt_content)) {
     img <- image_read(args$submission_image)
     size <- image_info(img)
@@ -44,23 +45,22 @@ process_image <- function(args, prompt, system_instructions) {
   )
 
   # Build prompt image list for OpenAI
-  submission_image <- if (grepl("\\{submission_image\\}", prompt_content)) {
-    args$submission_image
-  } else {
-    NULL
+  if (grepl("\\{submission_image\\}", prompt_content)){
+    submission_image <- args$submission_image
+  }else{
+    submission_image <- NULL
   }
-  
-  solution_image <- if (grepl("\\{solution_image\\}", prompt_content)) {
-    args$solution_image
-  } else {
-    NULL
+  if (grepl("\\{solution_image\\}", prompt_content)){ 
+    solution_image <- args$solution_image
+  }else{
+    solution_image <- NULL
   }
-
   request_text <- paste0(rendered_prompt, "\n\n",
                          paste(na.omit(c(submission_image, solution_image)), collapse = ", "))
 
   model_class <- model_mapping[[args$model]]
   if (is.null(model_class)) {
+    stop("Invalid model selected for image scope.")
     stop("Invalid model selected for image scope.")
   }
 
