@@ -6,7 +6,6 @@ source("ai-feedback/models/OpenAIModel.R")
 source("ai-feedback/models/RemoteModel.R")
 
 process_image <- function(args, prompt, system_instructions) {
-  OUTPUT_DIRECTORY <- "output_images"
   submission_file <- args$submission
   solution_file <- if (!is.null(args$solution)) {
     args$solution
