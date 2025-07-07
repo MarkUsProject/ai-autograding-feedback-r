@@ -7,13 +7,13 @@ source("ai-feedback/models/RemoteModel.R")
 
 process_image <- function(args, prompt, system_instructions) {
   submission_file <- args$submission
-  if (!is.null(args$solution)){
+  if (!is.null(args$solution)) {
     solution_file <- args$solution 
-  }else{
+  } else {
     solution_file <- NULL
   }
 
-  if (!file.exists(submission_file)){
+  if (!file.exists(submission_file)) {
     stop("Submission file not found")
   }
 
@@ -29,7 +29,7 @@ process_image <- function(args, prompt, system_instructions) {
     prompt_content <- gsub("\\{context\\}", paste0("```\n", context, "\n```"), prompt_content)
   }
 
-  # # Replace {image_size} placeholder
+  # Replace {image_size} placeholder
   if (grepl("\\{image_size\\}", prompt_content)) {
     img <- image_read(args$submission_image)
     size <- image_info(img)
@@ -45,14 +45,14 @@ process_image <- function(args, prompt, system_instructions) {
   )
 
   # Build prompt image list for OpenAI
-  if (grepl("\\{submission_image\\}", prompt_content)){
+  if (grepl("\\{submission_image\\}", prompt_content)) {
     submission_image <- args$submission_image
-  }else{
+  } else {
     submission_image <- NULL
   }
-  if (grepl("\\{solution_image\\}", prompt_content)){ 
+  if (grepl("\\{solution_image\\}", prompt_content)) { 
     solution_image <- args$solution_image
-  }else{
+  } else {
     solution_image <- NULL
   }
   request_text <- paste0(rendered_prompt, "\n\n",

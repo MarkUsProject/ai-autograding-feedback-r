@@ -66,7 +66,7 @@ main <- function(
 
   if (!is.null(output_template) && is.file(output_template)) {
     markdown_template <- load_file(output_template)
-  }else{
+  } else {
     markdown_template <- "{response}"
   }
   output_text <- markdown_template
@@ -79,7 +79,7 @@ main <- function(
   if (output != "") {
     dir.create(dirname(output), recursive = TRUE, showWarnings = FALSE)
     writeLines(output_text, output)
-  }else{
+  } else {
     cat(output_text)
   }
 }
