@@ -39,7 +39,7 @@ main <- function(
   }
 
   if (!is.null(prompt_custom)) {
-    prompt_content <- paste(readLines(prompt_custom), collapse = "\n")
+    prompt_content <- prompt_custom
   } else {
     if (!is.null(prompt)) {
       prompt_data <- load_file(prompt)
