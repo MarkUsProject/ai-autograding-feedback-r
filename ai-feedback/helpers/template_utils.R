@@ -121,26 +121,20 @@ gather_file_contents <- function(file_paths) {
       if (grepl("\\.pdf$", filename, ignore.case = TRUE)) {
         # Handle PDF files
         text_content <- extract_pdf_text(file_path)
-        file_contents <- paste0(file_contents, "=== ", filename, " ===\n")
         lines <- strsplit(text_content, "\n")[[1]]
-        
-        for (i in seq_along(lines)) {
-          stripped_line <- trimws(lines[i], which = "right")
-          file_contents <- paste0(file_contents, "(Line ", i, ") ", stripped_line, "\n")
-        }
-        file_contents <- paste0(file_contents, "\n")
-        
       } else {
         # Handle regular text files
         lines <- readLines(file_path, warn = FALSE)
-        file_contents <- paste0(file_contents, "=== ", filename, " ===\n")
-        
-        for (i in seq_along(lines)) {
-          stripped_line <- trimws(lines[i], which = "right")
-          file_contents <- paste0(file_contents, "(Line ", i, ") ", lines[i], "\n")
-        }
-        file_contents <- paste0(file_contents, "\n")
       }
+      
+      # Common processing for all file types
+      file_contents <- paste0(file_contents, "=== ", filename, " ===\n")
+      
+      for (i in seq_along(lines)) {
+        stripped_line <- trimws(lines[i], which = "right")
+        file_contents <- paste0(file_contents, "(Line ", i, ") ", stripped_line, "\n")
+      }
+      file_contents <- paste0(file_contents, "\n")
       
     }, error = function(e) {
       cat("Error reading file", filename, ":", e$message, "\n")
