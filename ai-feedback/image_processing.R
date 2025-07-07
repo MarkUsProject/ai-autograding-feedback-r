@@ -8,10 +8,18 @@ source("ai-feedback/models/RemoteModel.R")
 process_image <- function(args, prompt, system_instructions) {
   OUTPUT_DIRECTORY <- "output_images"
   submission_file <- args$submission
-  solution_file <- if (!is.null(args$solution)) args$solution else NULL
+  solution_file <- if (!is.null(args$solution)) {
+    args$solution
+  } else {
+    NULL
+  }
 
-  if (!file.exists(submission_file)) stop("Submission file not found")
-  if (!is.null(solution_file) && !file.exists(solution_file)) stop("Solution file not found")
+  if (!file.exists(submission_file)) {
+    stop("Submission file not found")
+  }
+  if (!is.null(solution_file) && !file.exists(solution_file)) {
+    stop("Solution file not found")
+  }
 
   prompt_content <- prompt
 
@@ -28,18 +36,26 @@ process_image <- function(args, prompt, system_instructions) {
     prompt_content <- gsub("\\{image_size\\}", paste(size$width, "by", size$height), prompt_content)
   }
 
-    rendered_prompt <- render_prompt_template(
-      prompt_content = prompt_content,
-      submission = submission_file,
-      solution = solution_file,
-      has_submission_image = grepl("\\{submission_image\\}", prompt_content),
-      has_solution_image = grepl("\\{solution_image\\}", prompt_content)
-    )
-
+  rendered_prompt <- render_prompt_template(
+    prompt_content = prompt_content,
+    submission = submission_file,
+    solution = solution_file,
+    has_submission_image = grepl("\\{submission_image\\}", prompt_content),
+    has_solution_image = grepl("\\{solution_image\\}", prompt_content)
+  )
 
   # Build prompt image list for OpenAI
-  submission_image <- if (grepl("\\{submission_image\\}", prompt_content)) args$submission_image else NULL
-  solution_image <- if (grepl("\\{solution_image\\}", prompt_content)) args$solution_image else NULL
+  submission_image <- if (grepl("\\{submission_image\\}", prompt_content)) {
+    args$submission_image
+  } else {
+    NULL
+  }
+  
+  solution_image <- if (grepl("\\{solution_image\\}", prompt_content)) {
+    args$solution_image
+  } else {
+    NULL
+  }
 
   request_text <- paste0(rendered_prompt, "\n\n",
                          paste(na.omit(c(submission_image, solution_image)), collapse = ", "))
@@ -54,12 +70,13 @@ process_image <- function(args, prompt, system_instructions) {
   } else {
     model <- model_class$new()
   }
+  
   response <- model$generate_response(
-      prompt = rendered_prompt,
-      system_instructions = system_instructions,
-      submission_image = submission_image,
-      solution_image = solution_image
-    )
+    prompt = rendered_prompt,
+    system_instructions = system_instructions,
+    submission_image = submission_image,
+    solution_image = solution_image
+  )
 
   return(list(request_text, response))
 }
