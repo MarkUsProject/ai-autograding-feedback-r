@@ -1,6 +1,19 @@
 # tests/test_main.R
 
 source("ai-feedback/main.R")
+custom <- paste(
+  "Consider this question:",
+  "{file_references}",
+  "",
+  "Files to Reference:",
+  "{file_contents}",
+  "",
+  "{submission_image}",
+  "",
+  "Do the graphs in the attached image solve the problem?",
+  "Do not include an example solution.",
+  sep = "\n"
+)
 
 # Utility to read generated output and validate
 validate_output <- function(output_path) {
@@ -21,10 +34,10 @@ tests <- list(
     params = list(
       scope = "image",
       model = "openai",
-      prompt = "data/prompts/user/image_analyze.md",
-      submission = "test_submissions/image_example/correctness_submission/correctness_submission.ipynb",
-      submission_image = "test_submissions/image_example/correctness_submission/correctness_submission.png",
-      solution = "test_submissions/image_example/solution.ipynb",
+      prompt_custom = custom,
+      submission = "fixtures/test_submissions/image_example/correctness_submission/correctness_submission.ipynb",
+      submission_image = "fixtures/test_submissions/image_example/correctness_submission/correctness_submission.png",
+      solution = "fixtures/test_submissions/image_example/solution.ipynb",
       output = "output/test_image_example_openai.md"
     )
   ),
@@ -33,10 +46,10 @@ tests <- list(
     params = list(
       scope = "image",
       model = "claude",
-      prompt = "data/prompts/user/image_analyze.md",
-      submission = "test_submissions/image_example/correctness_submission/correctness_submission.ipynb",
-      submission_image = "test_submissions/image_example/correctness_submission/correctness_submission.png",
-      solution = "test_submissions/image_example/solution.ipynb",
+      prompt_custom = custom,
+      submission = "fixtures/test_submissions/image_example/correctness_submission/correctness_submission.ipynb",
+      submission_image = "fixtures/test_submissions/image_example/correctness_submission/correctness_submission.png",
+      solution = "fixtures/test_submissions/image_example/solution.ipynb",
       output = "output/test_image_example_claude.md"
     )
   )

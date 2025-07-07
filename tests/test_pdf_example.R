@@ -2,6 +2,18 @@
 
 source("ai-feedback/main.R")
 
+custom_prompt <- paste(
+  "Does the student correctly respond to the question,",
+  "and meet all the criteria that's stated in the rubric?",
+  "Output a table of all the criteria that the instructor has in the solution,",
+  "whether the student's response follows the criteria,",
+  "and an explanation on how they improve their answer.",
+  "",
+  "Files to Reference:",
+  "{file_contents}",
+  sep = "\n"
+)
+
 validate_output <- function(output_path) {
   if (!file.exists(output_path)) {
     stop(paste("Missing output:", output_path))
@@ -22,9 +34,9 @@ tests <- list(
     params = list(
       scope = "text",
       model = "openai",
-      prompt = "data/prompts/user/text_pdf_analyze.md",
-      submission = "test_submissions/pdf_example/student_pdf_submission.pdf",
-      solution = "test_submissions/pdf_example/instructor_pdf_solution.pdf",
+      prompt_custom = custom_prompt,
+      submission = "fixtures/test_submissions/pdf_example/student_pdf_submission.pdf",
+      solution = "fixtures/test_submissions/pdf_example/instructor_pdf_solution.pdf",
       output = "output/test_pdf_analyze_openai.md"
     )
   ),
@@ -33,9 +45,9 @@ tests <- list(
     params = list(
       scope = "text",
       model = "claude",
-      prompt = "data/prompts/user/text_pdf_analyze.md",
-      submission = "test_submissions/pdf_example/student_pdf_submission.pdf",
-      solution = "test_submissions/pdf_example/instructor_pdf_solution.pdf",
+      prompt_custom = custom_prompt,
+      submission = "fixtures/test_submissions/pdf_example/student_pdf_submission.pdf",
+      solution = "fixtures/test_submissions/pdf_example/instructor_pdf_solution.pdf",
       output = "output/test_pdf_analyze_claude.md"
     )
   ),
@@ -44,9 +56,9 @@ tests <- list(
     params = list(
       scope = "text",
       model = "remote",
-      prompt = "data/prompts/user/text_pdf_analyze.md",
-      submission = "test_submissions/pdf_example/student_pdf_submission.pdf",
-      solution = "test_submissions/pdf_example/instructor_pdf_solution.pdf",
+      prompt_custom = custom_prompt,
+      submission = "fixtures/test_submissions/pdf_example/student_pdf_submission.pdf",
+      solution = "fixtures/test_submissions/pdf_example/instructor_pdf_solution.pdf",
       output = "output/test_pdf_analyze_remote.md"
     )
   )
