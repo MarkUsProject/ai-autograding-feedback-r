@@ -12,14 +12,18 @@ suppressWarnings(suppressMessages({
 # Load markdown prompt file
 load_markdown_prompt <- function(prompt_name, script_dir) {
   prompt_file <- file.path("ai-feedback", "data", "prompts", "user", paste0(prompt_name, ".md"))
-  if (!file.exists(prompt_file)) stop(paste("Error: Prompt file not found:", prompt_file))
+  if (!file.exists(prompt_file)) {
+    stop(paste("Error: Prompt file not found:", prompt_file))
+  }
   list(prompt_content = paste(readLines(prompt_file), collapse = "\n"))
 }
 
 # Load markdown output template
 load_markdown_template <- function(template, script_dir) {
   template_file <- file.path('ai-feedback', "data", "output", paste0(template, ".md"))
-  if (!file.exists(template_file)) stop(paste("Error: Template file not found:", template_file))
+  if (!file.exists(template_file)) {
+    stop(paste("Error: Template file not found:", template_file))
+  }
   paste(readLines(template_file), collapse = "\n")
 }
 
@@ -58,7 +62,9 @@ main <- function(
     prompt_content <- paste(readLines(prompt_custom), collapse = "\n")
   } else {
     if (!is.null(prompt)) {
-      if (!startsWith(prompt, scope)) stop("Prompt prefix does not match scope.")
+      if (!startsWith(prompt, scope)) {
+        stop("Prompt prefix does not match scope.")
+      }
       prompt_data <- load_markdown_prompt(prompt, script_dir)
       prompt_content <- paste0(prompt_content, prompt_data$prompt_content)
     }
@@ -90,4 +96,3 @@ main <- function(
     cat(output_text)
   }
 }
-
