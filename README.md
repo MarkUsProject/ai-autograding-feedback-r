@@ -134,15 +134,14 @@ ai-feedback/
 
 ### 1. Install Dependencies
 
-```r
-source("helpers/install_dependencies.R")
-```
-
-Or from terminal:
-
-```bash
-Rscript helpers/install_dependencies.R
-```
+- `jsonlite`
+- `magick`
+- `base64enc`
+- `stringr`
+- `tools`
+- `httr`
+- `dotenv`
+- `R6`
 
 ### 2. Set API Key
 
@@ -153,21 +152,6 @@ OPENAI_API_KEY=your_openai_key_here
 CLAUDE_API_KEY=your_claude_key_here
 REMOTE_API_KEY=your_remote_key_here
 ```
-
----
-
-## Requirements
-
-Ensure the following R packages are installed (auto-installed via `install_if_missing()`):
-
-- `jsonlite`
-- `magick`
-- `base64enc`
-- `stringr`
-- `tools`
-- `httr`
-- `dotenv`
-- `R6`
 
 ---
 
