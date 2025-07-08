@@ -1,7 +1,5 @@
 # tests/test_pdf_example.R
 
-source("ai-feedback/main.R")
-
 custom_prompt <- paste(
   "Does the student correctly respond to the question,",
   "and meet all the criteria that's stated in the rubric?",
@@ -35,8 +33,8 @@ tests <- list(
       scope = "text",
       model = "openai",
       prompt_custom = custom_prompt,
-      submission = "fixtures/test_submissions/pdf_example/student_pdf_submission.pdf",
-      solution = "fixtures/test_submissions/pdf_example/instructor_pdf_solution.pdf",
+      submission = "fixtures/pdf_example/student_pdf_submission.pdf",
+      solution = "fixtures/pdf_example/instructor_pdf_solution.pdf",
       output = "output/test_pdf_analyze_openai.md"
     )
   ),
@@ -46,8 +44,8 @@ tests <- list(
       scope = "text",
       model = "claude",
       prompt_custom = custom_prompt,
-      submission = "fixtures/test_submissions/pdf_example/student_pdf_submission.pdf",
-      solution = "fixtures/test_submissions/pdf_example/instructor_pdf_solution.pdf",
+      submission = "fixtures/pdf_example/student_pdf_submission.pdf",
+      solution = "fixtures/pdf_example/instructor_pdf_solution.pdf",
       output = "output/test_pdf_analyze_claude.md"
     )
   ),
@@ -57,8 +55,8 @@ tests <- list(
       scope = "text",
       model = "remote",
       prompt_custom = custom_prompt,
-      submission = "fixtures/test_submissions/pdf_example/student_pdf_submission.pdf",
-      solution = "fixtures/test_submissions/pdf_example/instructor_pdf_solution.pdf",
+      submission = "fixtures/pdf_example/student_pdf_submission.pdf",
+      solution = "fixtures/pdf_example/instructor_pdf_solution.pdf",
       output = "output/test_pdf_analyze_remote.md"
     )
   )

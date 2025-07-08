@@ -1,14 +1,10 @@
 library(base64enc)
 library(magick)
-source("ai-feedback/helpers/constants.R")
-source("ai-feedback/helpers/template_utils.R")
-source("ai-feedback/models/OpenAIModel.R")
-source("ai-feedback/models/RemoteModel.R")
 
 process_image <- function(args, prompt, system_instructions) {
   submission_file <- args$submission
   if (!is.null(args$solution)) {
-    solution_file <- args$solution 
+    solution_file <- args$solution
   } else {
     solution_file <- NULL
   }
@@ -50,13 +46,13 @@ process_image <- function(args, prompt, system_instructions) {
   } else {
     submission_image <- NULL
   }
-  if (grepl("\\{solution_image\\}", prompt_content)) { 
+  if (grepl("\\{solution_image\\}", prompt_content)) {
     solution_image <- args$solution_image
   } else {
     solution_image <- NULL
   }
   request_text <- paste0(rendered_prompt, "\n\n",
-                         paste(na.omit(c(submission_image, solution_image)), collapse = ", "))
+                         paste(stats::na.omit(c(submission_image, solution_image)), collapse = ", "))
 
   model_class <- model_mapping[[args$model]]
   if (is.null(model_class)) {
@@ -69,7 +65,7 @@ process_image <- function(args, prompt, system_instructions) {
   } else {
     model <- model_class$new()
   }
-  
+
   response <- model$generate_response(
     prompt = rendered_prompt,
     system_instructions = system_instructions,

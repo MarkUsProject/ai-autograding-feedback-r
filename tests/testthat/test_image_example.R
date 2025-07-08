@@ -1,6 +1,5 @@
 # tests/test_main.R
 
-source("ai-feedback/main.R")
 custom <- paste(
   "Consider this question:",
   "{file_references}",
@@ -35,9 +34,9 @@ tests <- list(
       scope = "image",
       model = "openai",
       prompt_custom = custom,
-      submission = "fixtures/test_submissions/image_example/correctness_submission/correctness_submission.ipynb",
-      submission_image = "fixtures/test_submissions/image_example/correctness_submission/correctness_submission.png",
-      solution = "fixtures/test_submissions/image_example/solution.ipynb",
+      submission = "fixtures/image_example/correctness_submission/correctness_submission.ipynb",
+      submission_image = "fixtures/image_example/correctness_submission/correctness_submission.png",
+      solution = "fixtures/image_example/solution.ipynb",
       output = "output/test_image_example_openai.md"
     )
   ),
@@ -47,9 +46,9 @@ tests <- list(
       scope = "image",
       model = "claude",
       prompt_custom = custom,
-      submission = "fixtures/test_submissions/image_example/correctness_submission/correctness_submission.ipynb",
-      submission_image = "fixtures/test_submissions/image_example/correctness_submission/correctness_submission.png",
-      solution = "fixtures/test_submissions/image_example/solution.ipynb",
+      submission = "fixtures/image_example/correctness_submission/correctness_submission.ipynb",
+      submission_image = "fixtures/image_example/correctness_submission/correctness_submission.png",
+      solution = "fixtures/image_example/solution.ipynb",
       output = "output/test_image_example_claude.md"
     )
   )

@@ -1,21 +1,21 @@
-# text_processing.R
-source("ai-feedback/helpers/constants.R")
-source("ai-feedback/helpers/template_utils.R")
+# code_processing.R
 
-#' Process text-based submissions and generate model feedback.
+#' Process code-based assignment files and generate model feedback.
 #'
-#' This function loads submission and solution files, constructs a prompt,
-#' and uses the selected model to generate a response.
+#' This function loads the submission, solution, and test output files,
+#' constructs a prompt using the template system, and dispatches to the
+#' appropriate model to generate a feedback response.
 #'
-#' @param args A list of arguments
-#' @param prompt A string containing the prompt template.
-#' @param system_instructions A string of system-level instructions for the model.
+#' @param args A list of input arguments including submission path, model name,
+#'        scope, solution path, optional question, and test output file.
+#' @param prompt The user-defined prompt string, possibly with placeholders.
+#' @param system_instructions A string passed to the model with system-level instructions.
 #'
-#' @return A list of two elements: request and response from the model.
+#' @return A list of two elements: the full request string and the model's response.
+#'
 #' @examples
-#' # Assuming valid args and prompt setup
-#' result <- process_text(args, prompt, system_instructions)
-process_text <- function(args, prompt, system_instructions) {
+#' result <- process_code(args, prompt, system_instructions)
+process_code <- function(args, prompt, system_instructions) {
   if (!file.exists(args$submission)) {
     stop(paste("Submission file not found:", args$submission))
   }
@@ -37,18 +37,16 @@ process_text <- function(args, prompt, system_instructions) {
     test_output_file <- args$test_output
   }
 
-  # Pass file paths to template renderer
   prompt <- render_prompt_template(
-    prompt_content = prompt, 
+    prompt_content = prompt,
     submission = submission_file,
     solution = solution_file,
-    test_output = test_output_file,
-    system_instructions = system_instructions
+    test_output = test_output_file
   )
 
   model_class <- model_mapping[[args$model]]
   if (is.null(model_class)) {
-    stop("Invalid model selected for text scope.")
+    stop("Invalid model selected for code scope.")
   }
 
   if (identical(model_class, RemoteModel) && !is.null(args$remote_model) && args$remote_model != "") {

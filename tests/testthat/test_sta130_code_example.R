@@ -1,7 +1,5 @@
 # tests/test_main.R
 
-source("ai-feedback/main.R")
-
 custom_prompt <- paste(
   "Compare the student's code and solution code. Create a final evaluation table with three columns:",
   "the task requirements, the student's attempt, potential issue.",
@@ -35,8 +33,8 @@ tests <- list(
       scope = "code",
       model = "openai",
       prompt_custom = custom_prompt,
-      submission = "fixtures/test_submissions/sta130_code_example/fail_submission/fail_submission.R",
-      solution = "fixtures/test_submissions/sta130_code_example/solution.R",
+      submission = "fixtures/sta130_code_example/fail_submission/fail_submission.R",
+      solution = "fixtures/sta130_code_example/solution.R",
       output = "output/test_sta_130_code_openai.md"
     )
   ),
@@ -46,8 +44,8 @@ tests <- list(
       scope = "code",
       model = "claude",
       prompt_custom = custom_prompt,
-      submission = "fixtures/test_submissions/sta130_code_example/fail_submission/fail_submission.R",
-      solution = "fixtures/test_submissions/sta130_code_example/solution.R",
+      submission = "fixtures/sta130_code_example/fail_submission/fail_submission.R",
+      solution = "fixtures/sta130_code_example/solution.R",
       output = "output/test_sta_130_code_claude.md"
     )
   ),
@@ -57,8 +55,8 @@ tests <- list(
       scope = "code",
       model = "remote",
       prompt_custom = custom_prompt,
-      submission = "fixtures/test_submissions/sta130_code_example/fail_submission/fail_submission.R",
-      solution = "fixtures/test_submissions/sta130_code_example/solution.R",
+      submission = "fixtures/sta130_code_example/fail_submission/fail_submission.R",
+      solution = "fixtures/sta130_code_example/solution.R",
       output = "output/test_sta_130_code_remote.md"
     )
   )

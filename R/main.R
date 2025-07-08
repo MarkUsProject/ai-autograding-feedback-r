@@ -1,8 +1,4 @@
 # main.R
-source("ai-feedback/image_processing.R")
-source("ai-feedback/code_processing.R")
-source("ai-feedback/text_processing.R")
-
 # Load required libraries
 suppressWarnings(suppressMessages({
   library(optparse)
@@ -13,7 +9,7 @@ suppressWarnings(suppressMessages({
 load_file <- function(file_path) {
   if (!file.exists(file_path)) {
     stop(paste("Error: Template file not found:", file_path))
-  } 
+  }
   paste(readLines(file_path), collapse = "\n")
 }
 
@@ -64,7 +60,7 @@ main <- function(
     response <- process_code(environment(), prompt_content, system_instructions)
   }
 
-  if (!is.null(output_template) && is.file(output_template)) {
+  if (!is.null(output_template) && file.exists(output_template)) {
     markdown_template <- load_file(output_template)
   } else {
     markdown_template <- "{response}"
