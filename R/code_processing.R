@@ -41,7 +41,8 @@ process_code <- function(args, prompt, system_instructions) {
     prompt_content = prompt,
     submission = submission_file,
     solution = solution_file,
-    test_output = test_output_file
+    test_output = test_output_file,
+    question = args$question,
   )
 
   model_class <- model_mapping[[args$model]]

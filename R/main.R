@@ -26,7 +26,8 @@ main <- function(
   submission_image = NULL,
   solution_image = NULL,
   output_template = NULL,
-  system_prompt = NULL
+  system_prompt = NULL,
+  question = NULL
 ) {
   prompt_content <- ""
   system_instructions <- ""

@@ -21,6 +21,7 @@ render_prompt_template <- function(
   test_output = NULL,
   has_submission_image = FALSE,
   has_solution_image = FALSE,
+  question = NULL,
   ...
 ) {
   
@@ -36,7 +37,7 @@ render_prompt_template <- function(
   if (grepl("\\{file_contents\\}", prompt_content)) {
     files_to_process <- list(submission, solution, test_output)
     files_to_process <- files_to_process[!sapply(files_to_process, is.null)]
-    template_data$file_contents <- gather_file_contents(files_to_process)
+    template_data$file_contents <- gather_file_contents(files_to_process, question)
   }
   
   # Handle image placeholders
@@ -105,44 +106,51 @@ gather_file_references <- function(submission, solution = NULL, test_output = NU
 #' Generate file contents with line numbers
 #'
 #' @param file_paths List of file paths to process
-#' 
+#' @param question Optional question heading to extract from files
 #' @return Character string with file contents and line numbers
-gather_file_contents <- function(file_paths) {
+gather_file_contents <- function(file_paths, question = NULL) {
   file_contents <- ""
-  
+
   for (file_path in file_paths) {
-    if (is.null(file_path) || !file.exists(file_path)) {
-      next
-    }
-    
+    if (is.null(file_path) || !file.exists(file_path)) next
+
     filename <- basename(file_path)
-    
+    lines <- NULL
+
     tryCatch({
-      if (grepl("\\.pdf$", filename, ignore.case = TRUE)) {
-        # Handle PDF files
-        text_content <- extract_pdf_text(file_path)
-        lines <- strsplit(text_content, "\n")[[1]]
+      # Only extract the question block if question is set
+      if (!is.null(question)) {
+        if (grepl("\\.pdf$", filename, ignore.case = TRUE)) {
+          text_block <- extract_question_from_pdf(file_path, question)
+        } else {
+          text_block <- extract_question_from_txt(file_path, question)
+        }
+        lines <- strsplit(text_block, "\n")[[1]]
       } else {
-        # Handle regular text files
-        lines <- readLines(file_path, warn = FALSE)
+        if (grepl("\\.pdf$", filename, ignore.case = TRUE)) {
+          text_content <- extract_pdf_text(file_path)
+          lines <- strsplit(text_content, "\n")[[1]]
+        } else {
+          lines <- readLines(file_path, warn = FALSE)
+        }
       }
-      
-      # Common processing for all file types
+
+      # Format the extracted lines
       file_contents <- paste0(file_contents, "=== ", filename, " ===\n")
-      
       for (i in seq_along(lines)) {
-        stripped_line <- trimws(lines[i], which = "right")
-        file_contents <- paste0(file_contents, "(Line ", i, ") ", stripped_line, "\n")
+        stripped <- trimws(lines[i], which = "right")
+        file_contents <- paste0(file_contents, "(Line ", i, ") ", stripped, "\n")
       }
       file_contents <- paste0(file_contents, "\n")
-      
+
     }, error = function(e) {
       cat("Error reading file", filename, ":", e$message, "\n")
     })
   }
-  
+
   return(file_contents)
 }
+
 
 #' Extract text from PDF files
 #'
@@ -159,3 +167,125 @@ extract_pdf_text <- function(pdf_path) {
     return(paste0("[Error: Could not extract text from PDF ", basename(pdf_path), "]"))
   })
 }
+
+#' Extract question content using PDF bookmarks (outline headings)
+#'
+#' @param pdf_path Path to the knitted R Markdown PDF
+#' @param heading Title of the heading to extract (e.g., "Question 1")
+#' @return Text block under that heading, up to the next heading
+extract_question_from_pdf <- function(pdf_path, question) {
+  if (!file.exists(pdf_path)) {
+   stop("Error: File ", basename(pdf_path), " not found")
+  }
+
+  plumber <- reticulate::import("pdfplumber", delay_load = TRUE)
+
+  # Recursively search for an outline entry matching the question title
+  get_matching_entry <- function(outlines, title, parent = NULL) {
+    for (entry in outlines) {
+      if (tolower(entry$title) == tolower(title)) {
+        entry$parent <- parent  # track parent for potential use
+        return(entry)
+      }
+      # Recurse into children
+      if (!is.null(entry$children)) {
+        child_match <- get_matching_entry(entry$children, title, parent = entry)
+        if (!is.null(child_match)) {
+          return(child_match)
+        }
+      }
+    }
+    return(NULL)
+  }
+
+  # Recursively collect all pages from an entry and its children
+  get_all_pages <- function(entry) {
+    pages <- c()
+    if (!is.null(entry$page_number)) {
+      pages <- c(pages, entry$page_number)
+    }
+    if (!is.null(entry$children)) {
+      for (child in entry$children) {
+        pages <- c(pages, get_all_pages(child))
+      }
+    }
+    return(pages)
+  }
+
+  result <- tryCatch({
+    pdf <- plumber$open(pdf_path)
+    outlines <- pdf$outlines
+
+    if (is.null(outlines) || length(outlines) == 0) {
+      pdf$close()
+      stop("Error: No bookmarks/headings found in this PDF")
+    }
+
+    # Match entry
+    entry <- get_matching_entry(outlines, question)
+    if (is.null(entry)) {
+      pdf$close()
+      stop("Heading '", question, "' not found in bookmarks")
+    }
+
+    # Decide whether to include children
+    pages <- if (!is.null(entry$children)) {
+      get_all_pages(entry)
+    } else {
+      get_all_pages(entry)[1]  # just this node
+    }
+
+    pages <- sort(unique(pages))
+    content <- ""
+
+    for (i in pages) {
+      if (i <= length(pdf$pages)) {
+        content <- paste0(content, pdf$pages[[i]]$extract_text(), "\n\n")
+      }
+    }
+
+    pdf$close()
+    return(content)
+  }, error = function(e) {
+    stop("Error using pdfplumber bookmarks: ", e$message)
+  })
+}
+
+
+#' Extract a specific question block from a submission file
+#' @param submission Path to the submission file
+#' @param question The exact heading string to look for
+#' @return Text block belonging to the specified question
+#' @throws Error if the question is not found in the submission
+extract_question_from_txt <- function(submission, question) {
+  if (!file.exists(submission)) {
+    return(paste0("[Error: Submission file ", basename(submission), " not found]"))
+  }
+
+  # Read and split file
+  lines <- readLines(submission, warn = FALSE)
+
+  # Find the exact heading that matches the question identifier
+  start_idx <- grep(paste0("^\\s*", question, "\\b"), lines, ignore.case = TRUE)
+  if (length(start_idx) == 0) {
+    stop("Could not find '", question, "' in submission")
+  }
+
+  # Generalize: get prefix of the question (e.g., "Question", "Q", "Task", etc.)
+  question_prefix <- regmatches(question, regexpr("^[^0-9a-zA-Z]*", question))
+
+  # Pattern to detect next heading that starts similarly
+  # E.g., if question is "Question 2a", we look for "Question ..." later on
+  heading_pattern <- paste0("^\\s*", question_prefix, "\\s*[0-9]+[a-zA-Z\\.\\(\\)]*\\b")
+
+  # Find the next matching heading line after current
+  next_heading <- grep(heading_pattern, lines, ignore.case = TRUE)
+  next_heading <- next_heading[next_heading > start_idx[1]]
+
+  # Determine end of block
+  end_idx <- if (length(next_heading) > 0) next_heading[1] - 1 else length(lines)
+
+  extracted <- paste(lines[start_idx[1]:end_idx], collapse = "\n")
+  return(extracted)
+}
+
