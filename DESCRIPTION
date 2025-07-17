@@ -18,7 +18,9 @@ Imports:
     optparse,
     R6,
     stringr,
-    tools
+    tools,
+    here,
+    reticulate
 Suggests: 
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
