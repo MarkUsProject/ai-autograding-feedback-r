@@ -1,10 +1,9 @@
-# helpers/template_utils.r
+# helpers/template_utils.R
 
 # Load required libraries (matching Python imports)
 library(pdftools)
 
 #' Render a prompt template by replacing placeholders with actual values
-#'
 #' @param prompt_content Character string with placeholders like {file_contents}
 #' @param submission Path to student's submission file
 #' @param solution Path to instructor's solution file (optional)
@@ -14,6 +13,8 @@ library(pdftools)
 #' @param ... Additional key-value pairs for placeholder replacement
 #'
 #' @return Character string with placeholders replaced
+#' 
+#' @export
 render_prompt_template <- function(
   prompt_content,
   submission = NULL,
@@ -24,15 +25,14 @@ render_prompt_template <- function(
   question = NULL,
   ...
 ) {
-  
   # Start with additional arguments
   template_data <- list(...)
-  
+
   # Generate file references if needed
   if (grepl("\\{file_references\\}", prompt_content)) {
     template_data$file_references <- gather_file_references(submission, solution, test_output)
   }
-  
+
   # Generate file contents if needed
   if (grepl("\\{file_contents\\}", prompt_content)) {
     files_to_process <- list(submission, solution, test_output)
@@ -50,7 +50,7 @@ render_prompt_template <- function(
       template_data$submission_image <- "[Submission Image Attached]"
     }
   }
-  
+
   if (grepl("\\{solution_image\\}", prompt_content) && !("solution_image" %in% names(template_data))) {
     if (has_submission_image && has_solution_image) {
       template_data$solution_image <- "The second attached image is the expected solution."
@@ -60,7 +60,7 @@ render_prompt_template <- function(
       template_data$solution_image <- "[Solution Image Attached]"
     }
   }
-  
+
   # Replace placeholders
   result <- prompt_content
   for (key in names(template_data)) {
@@ -69,12 +69,12 @@ render_prompt_template <- function(
       result <- gsub(placeholder, template_data[[key]], result, fixed = TRUE)
     }
   }
-  
+
   remaining_placeholders <- regmatches(result, gregexpr("\\{[a-zA-Z_][a-zA-Z0-9_]*\\}", result))[[1]]
   if (length(remaining_placeholders) > 0) {
     stop("Missing placeholders in template: ", paste(remaining_placeholders, collapse = ", "))
   }
-  
+
   return(result)
 }
 
@@ -168,95 +168,91 @@ extract_pdf_text <- function(pdf_path) {
   })
 }
 
-#' Extract question content using PDF bookmarks (outline headings)
+#' Extract question content using PDF bookmarks (outline headings) using PyMuPDF
 #'
-#' @param pdf_path Path to the knitted R Markdown PDF
+#' @param pdf_path Path to the PDF file
 #' @param heading Title of the heading to extract (e.g., "Question 1")
 #' @return Text block under that heading, up to the next heading
-extract_question_from_pdf <- function(pdf_path, question) {
+extract_question_from_pdf <- function(pdf_path, heading) {
   if (!file.exists(pdf_path)) {
-   stop("Error: File ", basename(pdf_path), " not found")
+    stop("Error: File ", basename(pdf_path), " not found")
   }
 
-  plumber <- reticulate::import("pdfplumber", delay_load = TRUE)
+  fitz <- reticulate::import("fitz", delay_load = TRUE)
+  doc <- fitz$open(pdf_path)
+  toc <- doc$get_toc()
 
-  # Recursively search for an outline entry matching the question title
-  get_matching_entry <- function(outlines, title, parent = NULL) {
-    for (entry in outlines) {
-      if (tolower(entry$title) == tolower(title)) {
-        entry$parent <- parent  # track parent for potential use
-        return(entry)
-      }
-      # Recurse into children
-      if (!is.null(entry$children)) {
-        child_match <- get_matching_entry(entry$children, title, parent = entry)
-        if (!is.null(child_match)) {
-          return(child_match)
+  # Find heading in ToC
+  cat(heading, "\n")
+  matches <- which(sapply(toc, function(entry) {
+    tolower(entry[[2]]) == tolower(heading)
+  }))
+
+  if (length(matches) == 0) {
+    stop("Heading '", heading, "' not found in PDF bookmarks")
+  }
+
+  match_index <- matches[1] - 1
+  start_page <- toc[[match_index]][[3]]
+  start_level <- toc[[match_index]][[1]]
+
+  next_index <- NA
+  for (i in (match_index + 2):length(toc)) {
+    next_level <- toc[[i]][[1]]
+    if (next_level <= start_level) {
+      next_index <- i
+      break
+    }
+  }
+  next_heading_title <- if (!is.na(next_index)) toc[[next_index]][[2]] else NULL
+
+  end_page <- if (!is.na(next_index)) {
+    toc[[next_index]][[3]] - 1
+  } else {
+    doc$page_count - 1  # include till end
+  }
+
+  if (end_page == start_page) {
+    end_page <- end_page + 1
+  }
+
+  text <- ""
+  found_end_heading <- FALSE
+
+  for (i in start_page:end_page) {
+    if (found_end_heading) break
+
+    page <- doc$load_page(i)
+    page_dict <- page$get_text("dict")
+
+    for (block in page_dict$blocks) {
+      if (!is.null(block$lines)) {
+        for (line in block$lines) {
+          line_text <- paste(sapply(line$spans, function(span) span$text), collapse = "")
+
+          # Early stop if we hit the next heading
+          if (!is.null(next_heading_title) &&
+                i == end_page &&
+                tolower(trimws(line_text)) == tolower(trimws(next_heading_title))) {
+            found_end_heading <- TRUE
+            break
+          }
+
+          text <- paste0(text, line_text, "\n")
         }
       }
+      if (found_end_heading) break
     }
-    return(NULL)
   }
 
-  # Recursively collect all pages from an entry and its children
-  get_all_pages <- function(entry) {
-    pages <- c()
-    if (!is.null(entry$page_number)) {
-      pages <- c(pages, entry$page_number)
-    }
-    if (!is.null(entry$children)) {
-      for (child in entry$children) {
-        pages <- c(pages, get_all_pages(child))
-      }
-    }
-    return(pages)
-  }
-
-  result <- tryCatch({
-    pdf <- plumber$open(pdf_path)
-    outlines <- pdf$outlines
-
-    if (is.null(outlines) || length(outlines) == 0) {
-      pdf$close()
-      stop("Error: No bookmarks/headings found in this PDF")
-    }
-
-    # Match entry
-    entry <- get_matching_entry(outlines, question)
-    if (is.null(entry)) {
-      pdf$close()
-      stop("Heading '", question, "' not found in bookmarks")
-    }
-
-    # Decide whether to include children
-    pages <- if (!is.null(entry$children)) {
-      get_all_pages(entry)
-    } else {
-      get_all_pages(entry)[1]  # just this node
-    }
-
-    pages <- sort(unique(pages))
-    content <- ""
-
-    for (i in pages) {
-      if (i <= length(pdf$pages)) {
-        content <- paste0(content, pdf$pages[[i]]$extract_text(), "\n\n")
-      }
-    }
-
-    pdf$close()
-    return(content)
-  }, error = function(e) {
-    stop("Error using pdfplumber bookmarks: ", e$message)
-  })
+  doc$close()
+  return(text)
 }
-
 
 #' Extract a specific question block from a submission file
 #' @param submission Path to the submission file
 #' @param question The exact heading string to look for
 #' @return Text block belonging to the specified question
-#' @throws Error if the question is not found in the submission
 extract_question_from_txt <- function(submission, question) {
   if (!file.exists(submission)) {
     return(paste0("[Error: Submission file ", basename(submission), " not found]"))
