@@ -37,7 +37,8 @@ process_image <- function(args, prompt, system_instructions) {
     submission = submission_file,
     solution = solution_file,
     has_submission_image = grepl("\\{submission_image\\}", prompt_content),
-    has_solution_image = grepl("\\{solution_image\\}", prompt_content)
+    has_solution_image = grepl("\\{solution_image\\}", prompt_content),
+    question = args$question,
   )
 
   # Build prompt image list for OpenAI
