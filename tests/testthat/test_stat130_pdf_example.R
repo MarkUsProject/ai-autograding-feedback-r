@@ -1,4 +1,6 @@
 # tests/test_main.R
+path <- here::here("tests", "fixtures")
+
 custom_prompt <- paste(
   "Compare the student's code and solution code. Create a final evaluation table with three columns:",
   "the task requirements, the student's attempt, potential issue.",
@@ -32,9 +34,10 @@ tests <- list(
       scope = "code",
       model = "openai",
       prompt_custom = custom_prompt,
-      submission = "tests/fixtures/sta130_pdf_example/submission.pdf",
+      submission = file.path(path, "sta130_pdf_example/submission.pdf"),
       output = "output/test_sta_130_pdf_openai.md",
-      question = "Question 1"
+      question = "Question 1",
+      output_template = "response_and_prompt"
     )
   ),
   list(
@@ -43,9 +46,10 @@ tests <- list(
       scope = "code",
       model = "claude",
       prompt_custom = custom_prompt,
-      submission = "tests/fixtures/sta130_pdf_example/submission.pdf",
+      submission = file.path(path, "sta130_pdf_example/submission.pdf"),
       output = "output/test_sta_130_pdf_claude.md",
-      question = "Question 1"
+      question = "Question 1",
+      output_template = "response_and_prompt"
     )
   )
 )
