@@ -13,7 +13,7 @@ library(pdftools)
 #' @param ... Additional key-value pairs for placeholder replacement
 #'
 #' @return Character string with placeholders replaced
-#' 
+#'
 #' @export
 render_prompt_template <- function(
   prompt_content,
