@@ -138,8 +138,8 @@ gather_file_contents <- function(file_paths, question = NULL) {
       # Format the extracted lines
       file_contents <- paste0(file_contents, "=== ", filename, " ===\n")
       for (i in seq_along(lines)) {
-        stripped <- trimws(lines[i], which = "right")
-        file_contents <- paste0(file_contents, "(Line ", i, ") ", stripped, "\n")
+        stripped_line <- trimws(lines[i], which = "right")
+        file_contents <- paste0(file_contents, "(Line ", i, ") ", stripped_line, "\n")
       }
       file_contents <- paste0(file_contents, "\n")
 
