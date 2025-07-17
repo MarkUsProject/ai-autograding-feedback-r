@@ -135,7 +135,7 @@ gather_file_contents <- function(file_paths, question = NULL) {
         }
       }
 
-      # Format the extracted lines
+      # Common processing for all file types
       file_contents <- paste0(file_contents, "=== ", filename, " ===\n")
       for (i in seq_along(lines)) {
         stripped_line <- trimws(lines[i], which = "right")
