@@ -194,20 +194,16 @@ flatten_toc <- function(toc, level = 1) {
 #' @return The title (character string) of the next heading at the same or higher level,
 #'         or \code{NULL} if there is no such heading.
 get_next_heading_title <- function(toc, heading) {
-  cat("Finding next heading after:", heading, "\n")
   matches <- which(tolower(sapply(toc, `[[`, "title")) == tolower(heading))
   if (length(matches) == 0) return(NULL)
 
   match_index <- matches[length(matches)]
   start_level <- toc[[match_index]]$level
-  print(match_index)
-  print(start_level)
-  print(length(toc))
+
   if (match_index >= length(toc)) {
     return(NULL)  # No next heading available
   }
   for (i in (match_index + 1):length(toc)) {
-    print(toc[[i]])
     if (toc[[i]]$level <= start_level) {
       return(toc[[i]]$title)
     }
