@@ -168,86 +168,127 @@ extract_pdf_text <- function(pdf_path) {
   })
 }
 
+flatten_toc <- function(toc, level = 1) {
+  flat_list <- list()
+  for (item in toc) {
+    flat_list <- append(flat_list, list(list(
+      title = item$title,
+      page = item$page %||% NA_integer_,
+      level = level
+    )))
+    if (!is.null(item$children) && length(item$children) > 0) {
+      flat_list <- append(flat_list, flatten_toc(item$children, level + 1))
+    }
+  }
+  return(flat_list)
+}
+
+#' Given a flattened TOC (table of contents) list and a specific heading title,
+#' this function returns the title of the next heading that is at the same or higher
+#' level in the hierarchy (i.e., not a child/subheading).
+#'
+#' @param toc A flattened list of TOC entries, as returned by \code{flatten_toc()}.
+#'            Each TOC entry should have at least \code{title} and \code{level} fields.
+#' @param heading A character string representing the heading title to search for.
+#'
+#' @return The title (character string) of the next heading at the same or higher level,
+#'         or \code{NULL} if there is no such heading.
+get_next_heading_title <- function(toc, heading) {
+  cat("Finding next heading after:", heading, "\n")
+  matches <- which(tolower(sapply(toc, `[[`, "title")) == tolower(heading))
+  if (length(matches) == 0) return(NULL)
+
+  match_index <- matches[length(matches)]
+  start_level <- toc[[match_index]]$level
+  print(match_index)
+  print(start_level)
+  print(length(toc))
+  if (match_index >= length(toc)) {
+    return(NULL)  # No next heading available
+  }
+  for (i in (match_index + 1):length(toc)) {
+    print(toc[[i]])
+    if (toc[[i]]$level <= start_level) {
+      return(toc[[i]]$title)
+    }
+  }
+
+  return(NULL)
+}
+
+# Safe null-coalescing operator
+`%||%` <- function(a, b) if (!is.null(a)) a else b
+
+#' Normalize Text for Consistent Matching
+#'
+#' @param x A character vector or string to normalize.
+#'
+#' @return A character vector with normalized text.
+normalize_text <- function(x) {
+  x <- gsub("[\r\n\t]", " ", x)
+  x <- gsub("[‘’´`]", "'", x)
+  x <- gsub("[“”]", "\"", x)
+  x <- gsub("–|—", "-", x)
+  x <- gsub("\\s+", " ", x)
+  tolower(trimws(x))
+}
+
 #' Extract question content using PDF bookmarks (outline headings) using PyMuPDF
 #'
 #' @param pdf_path Path to the PDF file
 #' @param heading Title of the heading to extract (e.g., "Question 1")
 #' @return Text block under that heading, up to the next heading
 extract_question_from_pdf <- function(pdf_path, heading) {
+
   if (!file.exists(pdf_path)) {
-    stop("Error: File ", basename(pdf_path), " not found")
+    stop("File not found:", pdf_path)
   }
 
-  fitz <- reticulate::import("fitz", delay_load = TRUE)
-  doc <- fitz$open(pdf_path)
-  toc <- doc$get_toc()
+  # Load and flatten TOC
+  toc_full <- pdf_toc(pdf_path)
+  toc <- flatten_toc(toc_full$children)
 
-  # Find heading in ToC
-  cat(heading, "\n")
-  matches <- which(sapply(toc, function(entry) {
-    tolower(entry[[2]]) == tolower(heading)
-  }))
+  norm_titles <- normalize_text(sapply(toc, `[[`, "title"))
+  norm_heading <- normalize_text(heading)
 
+  matches <- which(norm_titles == norm_heading)
   if (length(matches) == 0) {
-    stop("Heading '", heading, "' not found in PDF bookmarks")
+    stop("Heading '", heading, "' not found in TOC")
   }
 
-  match_index <- matches[1] - 1
-  start_page <- toc[[match_index]][[3]]
-  start_level <- toc[[match_index]][[1]]
+  next_heading_title <- get_next_heading_title(toc, heading)
+  # Read full text
+  full_text <- pdf_text(pdf_path)
+  lines <- unlist(strsplit(paste(full_text, collapse = "\n"), "\n"))
+  norm_lines <- normalize_text(trimws(lines))
 
-  next_index <- NA
-  for (i in (match_index + 2):length(toc)) {
-    next_level <- toc[[i]][[1]]
-    if (next_level <= start_level) {
-      next_index <- i
-      break
-    }
-  }
-  next_heading_title <- if (!is.na(next_index)) toc[[next_index]][[2]] else NULL
-
-  end_page <- if (!is.na(next_index)) {
-    toc[[next_index]][[3]] - 1
-  } else {
-    doc$page_count - 1  # include till end
+  # Locate start of heading
+  start_idx <- which(norm_lines == norm_heading)
+  if (length(start_idx) == 0) {
+    stop("Heading '", heading, "' not found in text")
   }
 
-  if (end_page == start_page) {
-    end_page <- end_page + 1
-  }
+  start_line <- start_idx[1]
+  end_line <- length(lines)
 
-  text <- ""
-  found_end_heading <- FALSE
-
-  for (i in start_page:end_page) {
-    if (found_end_heading) break
-
-    page <- doc$load_page(i)
-    page_dict <- page$get_text("dict")
-
-    for (block in page_dict$blocks) {
-      if (!is.null(block$lines)) {
-        for (line in block$lines) {
-          line_text <- paste(sapply(line$spans, function(span) span$text), collapse = "")
-
-          # Early stop if we hit the next heading
-          if (!is.null(next_heading_title) &&
-                i == end_page &&
-                tolower(trimws(line_text)) == tolower(trimws(next_heading_title))) {
-            found_end_heading <- TRUE
-            break
-          }
-
-          text <- paste0(text, line_text, "\n")
-        }
-      }
-      if (found_end_heading) break
+  # Locate next heading line
+  if (!is.null(next_heading_title)) {
+    norm_next <- normalize_text(next_heading_title)
+    next_idx <- which(norm_lines == norm_next)
+    if (length(next_idx) > 0 && next_idx[1] > start_line) {
+      end_line <- next_idx[1] - 1
     }
   }
 
-  doc$close()
-  return(text)
+  # Defensive bounds check
+  if (start_line > end_line || start_line < 1 || end_line < 1) {
+    stop("Invalid line bounds: start =", start_line, ", end =", end_line)
+  }
+
+  extracted <- lines[start_line:end_line]
+  return(paste(trimws(extracted), collapse = "\n"))
 }
+
 
 #' Extract a specific question block from a submission file
 #' @param submission Path to the submission file
@@ -258,7 +299,6 @@ extract_question_from_txt <- function(submission, question) {
     return(paste0("[Error: Submission file ", basename(submission), " not found]"))
   }
 
-  # Read and split file
   lines <- readLines(submission, warn = FALSE)
 
   # Find the exact heading that matches the question identifier
@@ -267,11 +307,9 @@ extract_question_from_txt <- function(submission, question) {
     stop("Could not find '", question, "' in submission")
   }
 
-  # Generalize: get prefix of the question (e.g., "Question", "Q", "Task", etc.)
   question_prefix <- regmatches(question, regexpr("^[^0-9a-zA-Z]*", question))
 
   # Pattern to detect next heading that starts similarly
-  # E.g., if question is "Question 2a", we look for "Question ..." later on
   heading_pattern <- paste0("^\\s*", question_prefix, "\\s*[0-9]+[a-zA-Z\\.\\(\\)]*\\b")
 
   # Find the next matching heading line after current
@@ -284,4 +322,3 @@ extract_question_from_txt <- function(submission, question) {
   extracted <- paste(lines[start_idx[1]:end_idx], collapse = "\n")
   return(extracted)
 }
-
