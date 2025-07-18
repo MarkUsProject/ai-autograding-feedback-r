@@ -168,6 +168,11 @@ extract_pdf_text <- function(pdf_path) {
   })
 }
 
+#' Converts a nested list of TOC entries (as returned by \code{pdf_toc()}) into a flat list,
+#' preserving heading titles, page numbers, and their respective hierarchy levels.
+#'
+#' @param toc A list of TOC entries
+#' @param level The current heading level (defaults to 1). Used internally during recursion.
 flatten_toc <- function(toc, level = 1) {
   flat_list <- list()
   for (item in toc) {
