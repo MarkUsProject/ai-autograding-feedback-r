@@ -41,7 +41,8 @@ process_text <- function(args, prompt, system_instructions) {
     submission = submission_file,
     solution = solution_file,
     test_output = test_output_file,
-    system_instructions = system_instructions
+    system_instructions = system_instructions,
+    question = args$question,
   )
 
   model_class <- model_mapping[[args$model]]

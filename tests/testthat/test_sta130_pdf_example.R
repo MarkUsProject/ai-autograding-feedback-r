@@ -14,6 +14,8 @@ custom_prompt <- paste(
   sep = "\n"
 )
 
+question <- "Question 1"
+
 # Utility to read generated output and validate
 validate_output <- function(output_path) {
   if (!file.exists(output_path)) {
@@ -34,33 +36,25 @@ tests <- list(
       scope = "code",
       model = "openai",
       prompt_custom = custom_prompt,
-      submission = file.path(path, "sta130_code_example/fail_submission/fail_submission.R"),
-      solution = file.path(path, "sta130_code_example/solution.R"),
-      output = "output/test_sta_130_code_openai.md"
-    )
-  ),
-  list(
-    name = "Code Scope - Claude",
-    params = list(
-      scope = "code",
-      model = "claude",
-      prompt_custom = custom_prompt,
-      submission = file.path(path, "sta130_code_example/fail_submission/fail_submission.R"),
-      solution = file.path(path, "sta130_code_example/solution.R"),
-      output = "output/test_sta_130_code_claude.md"
-    )
-  ),
-  list(
-    name = "Code Scope - Remote",
-    params = list(
-      scope = "code",
-      model = "remote",
-      prompt_custom = custom_prompt,
-      submission = file.path(path, "sta130_code_example/fail_submission/fail_submission.R"),
-      solution = file.path(path, "sta130_code_example/solution.R"),
-      output = "output/test_sta_130_code_remote.md"
+      submission = file.path(path, "sta130_pdf_example/submission.pdf"),
+      output = "output/test_sta_130_pdf_openai.md",
+      question = question,
+      output_template = "response_and_prompt"
     )
   )
+  # ,
+  # list(
+  #   name = "Code Scope - Claude",
+  #   params = list(
+  #     scope = "code",
+  #     model = "claude",
+  #     prompt_custom = custom_prompt,
+  #     submission = file.path(path, "sta130_pdf_example/submission.pdf"),
+  #     output = "output/test_sta_130_pdf_claude.md",
+  #     question = "Question 1",
+  #     output_template = "response_and_prompt"
+  #   )
+  # )
 )
 
 # Run test cases
