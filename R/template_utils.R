@@ -109,13 +109,13 @@ gather_file_references <- function(submission, solution = NULL, test_output = NU
 #' Generate file contents with line numbers
 #'
 #' @param file_paths List of file paths to process
-#' 
+#' @param question Optional question heading to extract from files
 #' @return Character string with file contents and line numbers
-gather_file_contents <- function(file_paths) {
+gather_file_contents <- function(file_paths, question = NULL) {
   file_contents <- ""
-  
+
   for (file_path in file_paths) {
-    if (is.null(file_path) || !file.exists(file_path)) {
+    if (is.null(file_path) || !file.exists(file_path)){
       next
     }
     
@@ -376,9 +376,7 @@ run_qmd_collect_png <- function(qmd_path, timeout = 60, output_dir = NULL) {
     
     # Execute in child process with plot capture
     png_files <- callr::r_safe(
-      function(qmd_path, code_chunks, output_dir_path) {
-        library(knitr)
-        library(evaluate)  
+      function(qmd_path, code_chunks, output_dir_path) { 
         library(withr)
         library(tidyverse)
         
