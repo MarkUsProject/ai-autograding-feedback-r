@@ -135,4 +135,3 @@ test_that("question pattern matching works correctly", {
                 info = paste("Sub-question pattern for:", case$heading))
   }
 })
- 
