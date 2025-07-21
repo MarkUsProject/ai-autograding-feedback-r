@@ -19,6 +19,12 @@ OpenAIModel <- R6Class("OpenAIModel",
     },
 
     generate_response = function(prompt, system_instructions, submission_images = NULL, solution_image = NULL) {
+      #' Generate a model response using the OpenAI API, including optional images.
+      #' @param prompt User prompt
+      #' @param system_instructions System-level instructions for the model
+      #' @param submission_images Optional file path to submission images
+      #' @param solution_image Optional file path to solution image
+      #' @return A list with the original prompt and the model's response or error message
       response_text <- tryCatch({
         url <- "https://api.openai.com/v1/chat/completions"
         
