@@ -300,26 +300,36 @@ extract_question_from_txt <- function(submission, question) {
     return(paste0("[Error: Submission file ", basename(submission), " not found]"))
   }
 
-  lines <- readLines(submission, warn = FALSE)
+  lines <- readLines(submission)
 
-  # Find the exact heading that matches the question identifier
-  start_idx <- grep(paste0("^\\s*", question, "\\b"), lines, ignore.case = TRUE)
-  if (length(start_idx) == 0) {
-    stop("Could not find '", question, "' in submission")
+  normalize_text <- function(x) {
+    tolower(trimws(gsub("\\s+", " ", x)))
   }
 
-  question_prefix <- regmatches(question, regexpr("^[^0-9a-zA-Z]*", question))
+  # Identify all Markdown headers and their levels
+  header_lines <- grep("^#{1,6}\\s+.*", lines)
+  header_levels <- nchar(gsub("\\s.*", "", lines[header_lines]))
+  header_texts <- normalize_text(sub("^#{1,6}\\s+", "", lines[header_lines]))
 
-  # Pattern to detect next heading that starts similarly
-  heading_pattern <- paste0("^\\s*", question_prefix, "\\s*[0-9]+[a-zA-Z\\.\\(\\)]*\\b")
+  # Find the starting heading
+  norm_question <- normalize_text(question)
+  match_idx <- which(header_texts == norm_question)
 
-  # Find the next matching heading line after current
-  next_heading <- grep(heading_pattern, lines, ignore.case = TRUE)
-  next_heading <- next_heading[next_heading > start_idx[1]]
+  if (length(match_idx) == 0) {
+    stop("Could not find question heading '", question, "' in submission")
+  }
 
-  # Determine end of block
-  end_idx <- if (length(next_heading) > 0) next_heading[1] - 1 else length(lines)
+  start_line <- header_lines[match_idx[1]]
+  current_level <- header_levels[match_idx[1]]
 
-  extracted <- paste(lines[start_idx[1]:end_idx], collapse = "\n")
+  # Find the next heading of the same or higher level
+  next_idx <- which(header_lines > start_line & header_levels <= current_level)
+  if (length(next_idx) > 0) {
+    end_line <- header_lines[next_idx[1]] - 1 
+  }else{ 
+    end_line <- length(lines)
+  }
+  # Extract the block
+  extracted <- paste(lines[start_line:end_line], collapse = "\n")
   return(extracted)
 }
