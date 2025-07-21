@@ -1,6 +1,5 @@
-# helpers/template_utils.r
+# helpers/template_utils.R
 
-# Load required libraries (matching Python imports)
 library(pdftools)
 
 #' Render a prompt template by replacing placeholders with actual values
@@ -11,10 +10,13 @@ library(pdftools)
 #' @param test_output Path to test output file (optional)
 #' @param has_submission_image Whether submission image is present
 #' @param has_solution_image Whether solution image is present
-#' @param question Question identifier for {question_images} placeholder (optional)
+#' @param question Question identifier
 #' @param ... Additional key-value pairs for placeholder replacement
 #'
 #' @return Character string with placeholders replaced
+#' 
+#' 
+#' @export
 render_prompt_template <- function(
   prompt_content,
   submission = NULL,
@@ -118,31 +120,39 @@ gather_file_contents <- function(file_paths) {
     }
     
     filename <- basename(file_path)
+    lines <- NULL
     
     tryCatch({
-      if (grepl("\\.pdf$", filename, ignore.case = TRUE)) {
-        # Handle PDF files
-        text_content <- extract_pdf_text(file_path)
-        lines <- strsplit(text_content, "\n")[[1]]
+      # Only extract the question block if question is set
+      if (!is.null(question)) {
+        if (grepl("\\.pdf$", filename, ignore.case = TRUE)) {
+          text_block <- extract_question_from_pdf(file_path, question)
+        } else {
+          text_block <- extract_question_from_txt(file_path, question)
+        }
+        lines <- strsplit(text_block, "\n")[[1]]
       } else {
-        # Handle regular text files
-        lines <- readLines(file_path, warn = FALSE)
+        if (grepl("\\.pdf$", filename, ignore.case = TRUE)) {
+          text_content <- extract_pdf_text(file_path)
+          lines <- strsplit(text_content, "\n")[[1]]
+        } else {
+          lines <- readLines(file_path)
+        }
       }
-      
+
       # Common processing for all file types
       file_contents <- paste0(file_contents, "=== ", filename, " ===\n")
-      
       for (i in seq_along(lines)) {
         stripped_line <- trimws(lines[i], which = "right")
         file_contents <- paste0(file_contents, "(Line ", i, ") ", stripped_line, "\n")
       }
       file_contents <- paste0(file_contents, "\n")
-      
+
     }, error = function(e) {
       cat("Error reading file", filename, ":", e$message, "\n")
     })
   }
-  
+
   return(file_contents)
 }
 
@@ -160,6 +170,180 @@ extract_pdf_text <- function(pdf_path) {
     cat("Error extracting text from PDF", basename(pdf_path), ":", e$message, "\n")
     return(paste0("[Error: Could not extract text from PDF ", basename(pdf_path), "]"))
   })
+}
+
+#' Converts a nested list of TOC entries (as returned by \code{pdf_toc()}) into a flat list,
+#' preserving heading titles, page numbers, and their respective hierarchy levels.
+#'
+#' @param toc A list of TOC entries
+#' @param level The current heading level (defaults to 1). Used internally during recursion.
+flatten_toc <- function(toc, level = 1) {
+  flat_list <- list()
+  for (item in toc) {
+    flat_list <- append(flat_list, list(list(
+      title = item$title,
+      page = item$page %||% NA_integer_,
+      level = level
+    )))
+    if (!is.null(item$children) && length(item$children) > 0) {
+      flat_list <- append(flat_list, flatten_toc(item$children, level + 1))
+    }
+  }
+  return(flat_list)
+}
+
+#' Given a flattened TOC (table of contents) list and a specific heading title,
+#' this function returns the title of the next heading that is at the same or higher
+#' level in the hierarchy (i.e., not a child/subheading).
+#'
+#' @param toc A flattened list of TOC entries, as returned by \code{flatten_toc()}.
+#'            Each TOC entry should have at least \code{title} and \code{level} fields.
+#' @param heading A character string representing the heading title to search for.
+#'
+#' @return The title (character string) of the next heading at the same or higher level,
+#'         or \code{NULL} if there is no such heading.
+get_next_heading_title <- function(toc, heading) {
+  matches <- which(tolower(sapply(toc, `[[`, "title")) == tolower(heading))
+  if (length(matches) == 0){
+    return(NULL)
+  }
+
+  match_index <- matches[length(matches)]
+  start_level <- toc[[match_index]]$level
+
+  if (match_index >= length(toc)) {
+    return(NULL)  # No next heading available
+  }
+  for (i in (match_index + 1):length(toc)) {
+    if (toc[[i]]$level <= start_level) {
+      return(toc[[i]]$title)
+    }
+  }
+
+  return(NULL)
+}
+
+# Safe null-coalescing operator
+`%||%` <- function(a, b){
+  if (is.null(a)) {
+    return(b)
+  } else {
+    return(a)
+  }
+}
+
+#' Normalize Text for Consistent Matching
+#'
+#' @param x A character vector or string to normalize.
+#'
+#' @return A character vector with normalized text.
+normalize_text <- function(x) {
+  x <- gsub("[\r\n\t]", " ", x)
+  x <- gsub("[‘’´`]", "'", x)
+  x <- gsub("[“”]", "\"", x)
+  x <- gsub("–|—", "-", x)
+  x <- gsub("\\s+", " ", x)
+  tolower(trimws(x))
+}
+
+#' Extract question content using PDF bookmarks (outline headings) using pdftools
+#'
+#' @param pdf_path Path to the PDF file
+#' @param heading Title of the heading to extract (e.g., "Question 1")
+#' @return Text block under that heading, up to the next heading
+extract_question_from_pdf <- function(pdf_path, heading) {
+
+  if (!file.exists(pdf_path)) {
+    stop(paste0("[Error: Submission file ", basename(pdf_path), " not found]"))
+  }
+
+  # Load and flatten TOC
+  toc_full <- pdf_toc(pdf_path)
+  toc <- flatten_toc(toc_full$children)
+
+  norm_titles <- normalize_text(sapply(toc, `[[`, "title"))
+  norm_heading <- normalize_text(heading)
+
+  matches <- which(norm_titles == norm_heading)
+  if (length(matches) == 0) {
+    stop("Question heading '", heading, "' not found in TOC")
+  }
+
+  next_heading_title <- get_next_heading_title(toc, heading)
+  # Read full text
+  full_text <- pdf_text(pdf_path)
+  lines <- unlist(strsplit(paste(full_text, collapse = "\n"), "\n"))
+  norm_lines <- normalize_text(trimws(lines))
+
+  # Locate start of heading
+  start_idx <- which(norm_lines == norm_heading)
+  if (length(start_idx) == 0) {
+    stop("Question heading '", heading, "' not found in text")
+  }
+
+  start_line <- start_idx[1]
+  end_line <- length(lines)
+
+  # Locate next heading line
+  if (!is.null(next_heading_title)) {
+    norm_next <- normalize_text(next_heading_title)
+    next_idx <- which(norm_lines == norm_next)
+    if (length(next_idx) > 0 && next_idx[1] > start_line) {
+      end_line <- next_idx[1] - 1
+    }
+  }
+
+  # Defensive bounds check
+  if (start_line > end_line || start_line < 1 || end_line < 1) {
+    stop("Invalid line bounds: start =", start_line, ", end =", end_line)
+  }
+
+  extracted <- lines[start_line:end_line]
+  return(paste(trimws(extracted), collapse = "\n"))
+}
+
+
+#' Extract a specific question block from a submission file
+#' @param submission Path to the submission file
+#' @param question The exact heading string to look for
+#' @return Text block belonging to the specified question
+extract_question_from_txt <- function(submission, question) {
+  if (!file.exists(submission)) {
+    return(paste0("[Error: Submission file ", basename(submission), " not found]"))
+  }
+
+  lines <- readLines(submission)
+
+  normalize_text <- function(x) {
+    tolower(trimws(gsub("\\s+", " ", x)))
+  }
+
+  # Identify all Markdown headers and their levels
+  header_lines <- grep("^#{1,6}\\s+.*", lines)
+  header_levels <- nchar(gsub("\\s.*", "", lines[header_lines]))
+  header_texts <- normalize_text(sub("^#{1,6}\\s+", "", lines[header_lines]))
+
+  # Find the starting heading
+  norm_question <- normalize_text(question)
+  match_idx <- which(header_texts == norm_question)
+
+  if (length(match_idx) == 0) {
+    stop("Could not find question heading '", question, "' in submission")
+  }
+
+  start_line <- header_lines[match_idx[1]]
+  current_level <- header_levels[match_idx[1]]
+
+  # Find the next heading of the same or higher level
+  next_idx <- which(header_lines > start_line & header_levels <= current_level)
+  if (length(next_idx) > 0) {
+    end_line <- header_lines[next_idx[1]] - 1
+  } else {
+    end_line <- length(lines)
+  }
+  # Extract the block
+  extracted <- paste(lines[start_line:end_line], collapse = "\n")
+  return(extracted)
 }
 
 #' Extract R code and context from QMD/RMD file using simple parsing
