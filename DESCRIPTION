@@ -16,9 +16,11 @@ Imports:
     jsonlite,
     magick,
     optparse,
+    pdftools,
     R6,
     stringr,
     tools
 Suggests: 
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    here
 Config/testthat/edition: 3

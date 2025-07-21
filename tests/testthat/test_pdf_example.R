@@ -1,4 +1,5 @@
 # tests/test_pdf_example.R
+path <- here::here("tests", "fixtures")
 
 custom_prompt <- paste(
   "Does the student correctly respond to the question,",
@@ -33,8 +34,8 @@ tests <- list(
       scope = "text",
       model = "openai",
       prompt_custom = custom_prompt,
-      submission = "fixtures/pdf_example/student_pdf_submission.pdf",
-      solution = "fixtures/pdf_example/instructor_pdf_solution.pdf",
+      submission = file.path(path, "pdf_example/student_pdf_submission.pdf"),
+      solution = file.path(path, "pdf_example/instructor_pdf_solution.pdf"),
       output = "output/test_pdf_analyze_openai.md"
     )
   ),
@@ -44,8 +45,8 @@ tests <- list(
       scope = "text",
       model = "claude",
       prompt_custom = custom_prompt,
-      submission = "fixtures/pdf_example/student_pdf_submission.pdf",
-      solution = "fixtures/pdf_example/instructor_pdf_solution.pdf",
+      submission = file.path(path, "pdf_example/student_pdf_submission.pdf"),
+      solution = file.path(path, "pdf_example/instructor_pdf_solution.pdf"),
       output = "output/test_pdf_analyze_claude.md"
     )
   ),
@@ -55,8 +56,8 @@ tests <- list(
       scope = "text",
       model = "remote",
       prompt_custom = custom_prompt,
-      submission = "fixtures/pdf_example/student_pdf_submission.pdf",
-      solution = "fixtures/pdf_example/instructor_pdf_solution.pdf",
+      submission = file.path(path, "pdf_example/student_pdf_submission.pdf"),
+      solution = file.path(path, "pdf_example/instructor_pdf_solution.pdf"),
       output = "output/test_pdf_analyze_remote.md"
     )
   )

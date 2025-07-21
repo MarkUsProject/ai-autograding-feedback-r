@@ -1,4 +1,5 @@
 # tests/test_main.R
+path <- here::here("tests", "fixtures")
 
 custom <- paste(
   "Consider this question:",
@@ -34,9 +35,9 @@ tests <- list(
       scope = "image",
       model = "openai",
       prompt_custom = custom,
-      submission = "fixtures/image_example/correctness_submission/correctness_submission.ipynb",
-      submission_image = "fixtures/image_example/correctness_submission/correctness_submission.png",
-      solution = "fixtures/image_example/solution.ipynb",
+      submission = file.path(path, "image_example/correctness_submission/correctness_submission.ipynb"),
+      submission_image = file.path(path, "image_example/correctness_submission/correctness_submission.png"),
+      solution = file.path(path, "image_example/solution.ipynb"),
       output = "output/test_image_example_openai.md"
     )
   ),
@@ -46,9 +47,9 @@ tests <- list(
       scope = "image",
       model = "claude",
       prompt_custom = custom,
-      submission = "fixtures/image_example/correctness_submission/correctness_submission.ipynb",
-      submission_image = "fixtures/image_example/correctness_submission/correctness_submission.png",
-      solution = "fixtures/image_example/solution.ipynb",
+      submission = file.path(path, "image_example/correctness_submission/correctness_submission.ipynb"),
+      submission_image = file.path(path, "image_example/correctness_submission/correctness_submission.png"),
+      solution = file.path(path, "image_example/solution.ipynb"),
       output = "output/test_image_example_claude.md"
     )
   )
