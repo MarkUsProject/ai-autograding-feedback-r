@@ -1,6 +1,5 @@
 # helpers/template_utils.R
 
-# Load required libraries (matching Python imports)
 library(pdftools)
 
 #' Render a prompt template by replacing placeholders with actual values
@@ -112,7 +111,9 @@ gather_file_contents <- function(file_paths, question = NULL) {
   file_contents <- ""
 
   for (file_path in file_paths) {
-    if (is.null(file_path) || !file.exists(file_path)) next
+    if (is.null(file_path) || !file.exists(file_path)){
+      next
+    }
 
     filename <- basename(file_path)
     lines <- NULL
@@ -131,7 +132,7 @@ gather_file_contents <- function(file_paths, question = NULL) {
           text_content <- extract_pdf_text(file_path)
           lines <- strsplit(text_content, "\n")[[1]]
         } else {
-          lines <- readLines(file_path, warn = FALSE)
+          lines <- readLines(file_path)
         }
       }
 
@@ -159,7 +160,6 @@ gather_file_contents <- function(file_paths, question = NULL) {
 #' @return Character string with extracted text
 extract_pdf_text <- function(pdf_path) {
   tryCatch({
-    # Try to use pdftools (R equivalent of PyPDF2)
     text <- pdftools::pdf_text(pdf_path)
     return(paste(text, collapse = "\n"))
   }, error = function(e) {
@@ -200,7 +200,9 @@ flatten_toc <- function(toc, level = 1) {
 #'         or \code{NULL} if there is no such heading.
 get_next_heading_title <- function(toc, heading) {
   matches <- which(tolower(sapply(toc, `[[`, "title")) == tolower(heading))
-  if (length(matches) == 0) return(NULL)
+  if (length(matches) == 0){
+    return(NULL)
+  }
 
   match_index <- matches[length(matches)]
   start_level <- toc[[match_index]]$level
@@ -218,7 +220,13 @@ get_next_heading_title <- function(toc, heading) {
 }
 
 # Safe null-coalescing operator
-`%||%` <- function(a, b) if (!is.null(a)) a else b
+`%||%` <- function(a, b){
+  if (is.null(a)) {
+    return(b)
+  } else {
+    return(a)
+  }
+}
 
 #' Normalize Text for Consistent Matching
 #'
@@ -234,7 +242,7 @@ normalize_text <- function(x) {
   tolower(trimws(x))
 }
 
-#' Extract question content using PDF bookmarks (outline headings) using PyMuPDF
+#' Extract question content using PDF bookmarks (outline headings) using pdftools
 #'
 #' @param pdf_path Path to the PDF file
 #' @param heading Title of the heading to extract (e.g., "Question 1")
@@ -242,7 +250,7 @@ normalize_text <- function(x) {
 extract_question_from_pdf <- function(pdf_path, heading) {
 
   if (!file.exists(pdf_path)) {
-    stop("File not found:", pdf_path)
+    stop(paste0("[Error: Submission file ", basename(pdf_path), " not found]"))
   }
 
   # Load and flatten TOC
@@ -254,7 +262,7 @@ extract_question_from_pdf <- function(pdf_path, heading) {
 
   matches <- which(norm_titles == norm_heading)
   if (length(matches) == 0) {
-    stop("Heading '", heading, "' not found in TOC")
+    stop("Question heading '", heading, "' not found in TOC")
   }
 
   next_heading_title <- get_next_heading_title(toc, heading)
@@ -266,7 +274,7 @@ extract_question_from_pdf <- function(pdf_path, heading) {
   # Locate start of heading
   start_idx <- which(norm_lines == norm_heading)
   if (length(start_idx) == 0) {
-    stop("Heading '", heading, "' not found in text")
+    stop("Question heading '", heading, "' not found in text")
   }
 
   start_line <- start_idx[1]
@@ -325,8 +333,8 @@ extract_question_from_txt <- function(submission, question) {
   # Find the next heading of the same or higher level
   next_idx <- which(header_lines > start_line & header_levels <= current_level)
   if (length(next_idx) > 0) {
-    end_line <- header_lines[next_idx[1]] - 1 
-  }else{ 
+    end_line <- header_lines[next_idx[1]] - 1
+  } else {
     end_line <- length(lines)
   }
   # Extract the block
