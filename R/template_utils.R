@@ -41,36 +41,6 @@ render_prompt_template <- function(
     template_data$file_contents <- gather_file_contents(files_to_process)
   }
   
-  # Generate question images if needed (returns file paths, not base64)
-  if (grepl("\\{question_images\\}", prompt_content)) {
-    if (!is.null(submission) && !is.null(question) && grepl("\\.qmd$", submission, ignore.case = TRUE)) {
-      all_png_files <- run_qmd_collect_png(submission, timeout = 60, output_dir = NULL)
-      
-      # Filter for specific question if provided
-      if (!is.null(question)) {
-        question_pattern <- if (grepl("^\\([a-z]\\)$", question)) {
-          # Sub-question like "(a)"
-          paste0("__", gsub("[^a-z]", "", question), "__")
-        } else if (grepl("^[Qq]uestion\\s*\\d+", question)) {
-          # Main question like "Question 1"  
-          paste0("Q", gsub(".*([0-9]+).*", "\\1", question), "__")
-        } else {
-          question
-        }
-        
-        all_png_files <- all_png_files[grepl(question_pattern, basename(all_png_files))]
-      }
-      
-      if (length(all_png_files) > 0) {
-        template_data$question_images <- paste("Generated", length(all_png_files), "plot files:", paste(basename(all_png_files), collapse = ", "))
-      } else {
-        template_data$question_images <- "No plots generated for this question."
-      }
-    } else {
-      template_data$question_images <- ""
-    }
-  }
-  
   # Handle image placeholders
   if (grepl("\\{submission_image\\}", prompt_content) && !("submission_image" %in% names(template_data))) {
     if (has_submission_image && has_solution_image) {
@@ -101,7 +71,7 @@ render_prompt_template <- function(
     }
   }
   
-  remaining_placeholders <- regmatches(result, gregexpr("\\{[a-zA-Z_][a-zA-Z0-9_]*\\}", result))[[1]]
+  remaining_placeholders <- regmatches(result, gregexpr("\\{[a-zA-Z_][a-zA-Z0-9_]+\\}", result))[[1]]
   if (length(remaining_placeholders) > 0) {
     stop("Missing placeholders in template: ", paste(remaining_placeholders, collapse = ", "))
   }

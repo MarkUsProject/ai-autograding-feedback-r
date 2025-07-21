@@ -17,6 +17,23 @@ process_image <- function(args, prompt, system_instructions) {
     stop("Solution file not found")
   }
 
+  # Check if submission is QMD file and generate PNGs
+  submission_images <- NULL
+  if (grepl("\\.(qmd|rmd)$", submission_file, ignore.case = TRUE)) {
+    cat("Detected QMD/RMD file, generating PNG plots...\n")
+    png_files <- run_qmd_collect_png(submission_file, timeout = 60, output_dir = NULL)
+    
+    if (length(png_files) > 0) {
+      cat("Generated", length(png_files), "PNG files from QMD/RMD\n")
+      submission_images <- png_files
+    } else {
+      cat("No PNG files generated from QMD/RMD\n")
+    }
+  } else if (!is.null(args$submission_image)) {
+    # Use provided submission image
+    submission_images <- args$submission_image
+  }
+
   prompt_content <- prompt
 
   # Replace {context} placeholder
@@ -25,38 +42,31 @@ process_image <- function(args, prompt, system_instructions) {
     prompt_content <- gsub("\\{context\\}", paste0("```\n", context, "\n```"), prompt_content)
   }
 
-  # Replace {image_size} placeholder
+  # Replace {image_size} placeholder  
   if (grepl("\\{image_size\\}", prompt_content)) {
-    img <- image_read(args$submission_image)
-    size <- image_info(img)
-    prompt_content <- gsub("\\{image_size\\}", paste(size$width, "by", size$height), prompt_content)
+    if (!is.null(submission_images)) {
+      img <- image_read(submission_images[1])  # Use first image for size
+      size <- image_info(img)
+      prompt_content <- gsub("\\{image_size\\}", paste(size$width, "by", size$height), prompt_content)
+    }
   }
 
   rendered_prompt <- render_prompt_template(
     prompt_content = prompt_content,
     submission = submission_file,
     solution = solution_file,
-    has_submission_image = grepl("\\{submission_image\\}", prompt_content),
+    has_submission_image = !is.null(submission_images),
     has_solution_image = grepl("\\{solution_image\\}", prompt_content)
   )
 
-  # Build prompt image list for OpenAI
-  if (grepl("\\{submission_image\\}", prompt_content)) {
-    submission_image <- args$submission_image
-  } else {
-    submission_image <- NULL
-  }
+  # Get solution image if specified
+  solution_image <- NULL
   if (grepl("\\{solution_image\\}", prompt_content)) {
     solution_image <- args$solution_image
-  } else {
-    solution_image <- NULL
   }
-  request_text <- paste0(rendered_prompt, "\n\n",
-                         paste(stats::na.omit(c(submission_image, solution_image)), collapse = ", "))
 
   model_class <- model_mapping[[args$model]]
   if (is.null(model_class)) {
-    stop("Invalid model selected for image scope.")
     stop("Invalid model selected for image scope.")
   }
 
@@ -69,9 +79,9 @@ process_image <- function(args, prompt, system_instructions) {
   response <- model$generate_response(
     prompt = rendered_prompt,
     system_instructions = system_instructions,
-    submission_image = submission_image,
+    submission_images = submission_images,
     solution_image = solution_image
   )
 
-  return(list(request_text, response))
+  return(list(rendered_prompt, response))
 }

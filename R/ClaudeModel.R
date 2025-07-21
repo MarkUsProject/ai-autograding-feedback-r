@@ -20,7 +20,7 @@ ClaudeModel <- R6Class("ClaudeModel",
     generate_response = function(
       prompt,
       system_instructions,
-      submission_image = NULL,
+      submission_images = NULL,
       solution_image = NULL
     ) {
       #' Generate a Claude response, optionally including submission and solution images.
@@ -43,10 +43,15 @@ ClaudeModel <- R6Class("ClaudeModel",
         )
       }
 
-      # Append images if available
-      if (!is.null(submission_image)) {
-        content_blocks <- append(content_blocks, list(encode_image_block(submission_image)))
+      # Handle multiple submission images from QMD/RMD processing
+      if (!is.null(submission_images)) {
+        for (i in seq_along(submission_images)) {
+          submission_img <- submission_images[i]
+          content_blocks <- append(content_blocks, list(encode_image_block(submission_img)))
+        }
       }
+      
+      # Handle solution image
       if (!is.null(solution_image)) {
         content_blocks <- append(content_blocks, list(encode_image_block(solution_image)))
       }

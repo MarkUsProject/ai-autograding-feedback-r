@@ -1,14 +1,6 @@
 test_that("QMD chunk extraction works correctly", {
-  # Find test QMD file with better path resolution
-  qmd_path <- testthat::test_path("fixtures", "sta130-example", "submission.qmd")
-  
-  # Fall back to other common paths if needed
-  if (!file.exists(qmd_path)) {
-    qmd_path <- "fixtures/sta130-example/submission.qmd"
-  }
-  if (!file.exists(qmd_path)) {
-    qmd_path <- file.path("..", "fixtures/sta130-example/submission.qmd") 
-  }
+  # Use direct path that works with source() calls
+  qmd_path <- "tests/fixtures/sta130-example/submission.qmd"
   
   skip_if(!file.exists(qmd_path), "Test QMD file not found")
   
@@ -24,14 +16,8 @@ test_that("QMD chunk extraction works correctly", {
 })
 
 test_that("PNG generation works correctly", {
-  # Find test QMD file
-  qmd_path <- testthat::test_path("fixtures", "sta130-example", "submission.qmd")
-  if (!file.exists(qmd_path)) {
-    qmd_path <- "fixtures/sta130-example/submission.qmd"
-  }
-  if (!file.exists(qmd_path)) {
-    qmd_path <- file.path("..", "fixtures/sta130-example/submission.qmd")
-  }
+  # Use direct path that works with source() calls
+  qmd_path <- "tests/fixtures/sta130-example/submission.qmd"
   
   skip_if(!file.exists(qmd_path), "Test QMD file not found")
   
