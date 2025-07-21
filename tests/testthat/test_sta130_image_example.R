@@ -85,4 +85,3 @@ for (test in tests) {
     cat(test$name, "failed:", e$message, "\n")
   })
 }
- 

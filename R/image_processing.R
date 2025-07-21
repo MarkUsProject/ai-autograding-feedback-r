@@ -42,7 +42,7 @@ process_image <- function(args, prompt, system_instructions) {
     prompt_content <- gsub("\\{context\\}", paste0("```\n", context, "\n```"), prompt_content)
   }
 
-  # Replace {image_size} placeholder  
+  # Replace {image_size} placeholder
   if (grepl("\\{image_size\\}", prompt_content)) {
     if (!is.null(submission_images)) {
       img <- image_read(submission_images[1])  # Use first image for size
