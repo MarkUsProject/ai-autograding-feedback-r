@@ -38,18 +38,18 @@ tests <- list(
       output = "tests/output/test_sta130_image_openai.md"
     )
   ),
-  # list(
-  #   name = "Image Scope - Claude (QMD Plots)", 
-  #   params = list(
-  #     scope = "image",
-  #     model = "claude",
-  #     prompt_custom = custom_prompt,
-  #     submission = "tests/fixtures/sta130-example/submission.qmd",
-  #     solution = NULL,
-  #     question = "Question 1",
-  #     output = "tests/output/test_sta130_image_claude.md"
-  #   )
-  # ),
+  list(
+    name = "Image Scope - Claude (QMD Plots)", 
+    params = list(
+      scope = "image",
+      model = "claude",
+      prompt_custom = custom_prompt,
+      submission = "tests/fixtures/sta130-example/submission.qmd",
+      solution = NULL,
+      question = "Question 1",
+      output = "tests/output/test_sta130_image_claude.md"
+    )
+  ),
   list(
     name = "Image Scope - Openai Subquestion (QMD Plots)", 
     params = list(
