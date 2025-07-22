@@ -28,7 +28,7 @@ This version exposes a direct `main()` function instead of using a CLI, making i
 | `model`              | Model name: `openai`, `claude`, `remote`                    | ✅        |
 | `remote_model`       | Optional remote model string (used with remote models)      | ❌        |
 | `output`             | Markdown output filepath                                    | ❌        |
-| `submission_images`  | Path to student submission images (image scope)             | ❌        |
+| `submission_image`   | Path to image (image scope)                                 | ❌        |
 | `solution_image`     | Path to reference image                                     | ❌        |
 | `output_template`    | Output template name (default: `response_only`)             | ❌        |
 | `system_prompt`      | Name of system prompt in `data/prompts/system/`             | ❌        |
