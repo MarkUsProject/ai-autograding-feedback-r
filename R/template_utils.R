@@ -46,17 +46,17 @@ render_prompt_template <- function(
   # Handle image placeholders
   if (grepl("\\{submission_image\\}", prompt_content) && !("submission_image" %in% names(template_data))) {
     if (has_submission_image && has_solution_image) {
-      template_data$submission_image <- "The first attached image is the student's submission."
+      template_data$submission_image <- "The attached images include the student's submission plots and the expected solution."
     } else if (has_submission_image) {
-      template_data$submission_image <- "The attached image is the student's submission."
+      template_data$submission_image <- "The attached images are the student's submission plots."
     } else {
-      template_data$submission_image <- "[Submission Image Attached]"
+      template_data$submission_image <- "[Submission Images Attached]"
     }
   }
   
   if (grepl("\\{solution_image\\}", prompt_content) && !("solution_image" %in% names(template_data))) {
     if (has_submission_image && has_solution_image) {
-      template_data$solution_image <- "The second attached image is the expected solution."
+      template_data$solution_image <- "The final attached image is the expected solution."
     } else if (has_solution_image) {
       template_data$solution_image <- "The attached image is the expected solution."
     } else {
