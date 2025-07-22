@@ -27,7 +27,7 @@ OpenAIModel <- R6Class("OpenAIModel",
       #' @return A list with the original prompt and the model's response or error message
       response_text <- tryCatch({
         url <- "https://api.openai.com/v1/chat/completions"
-        
+
         headers <- add_headers(
           'Authorization' = paste('Bearer', self$api_key),
           'Content-Type' = 'application/json'

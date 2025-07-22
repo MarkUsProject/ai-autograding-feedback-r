@@ -1,4 +1,3 @@
-
 # helpers/template_utils.R
 
 library(pdftools)
