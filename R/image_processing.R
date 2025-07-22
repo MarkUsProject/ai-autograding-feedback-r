@@ -20,14 +20,26 @@ process_image <- function(args, prompt, system_instructions) {
   # Check if submission is QMD file and generate PNGs
   submission_images <- NULL
   if (grepl("\\.(qmd|rmd)$", submission_file, ignore.case = TRUE)) {
-    cat("Detected QMD/RMD file, generating PNG plots...\n")
+    cat("Detected QMD file, generating PNG plots...\n")
     png_files <- run_qmd_collect_png(submission_file, timeout = 60, output_dir = NULL)
+
+      # filter by question tag
+  if (!is.null(args$question)) {
+    pat <- args$question
+    if (grepl("^\\([a-z]\\)$", pat)) {
+      pat <- paste0("__", gsub("[^a-z]", "", pat), "__")   # "(b)" → "__b__"
+    } else if (grepl("^[Qq]uestion\\s*\\d+", pat)) {
+      num <- sub(".*?(\\d+).*", "\\1", pat)                # "Question 1" → "1"
+      pat <- paste0("Q", num, "__")                        # → "Q1__"
+    }
+    png_files <- png_files[grepl(pat, basename(png_files))]
+  }
     
     if (length(png_files) > 0) {
-      cat("Generated", length(png_files), "PNG files from QMD/RMD\n")
+      cat("Generated", length(png_files), "PNG files from QMD\n")
       submission_images <- png_files
     } else {
-      cat("No PNG files generated from QMD/RMD\n")
+      cat("No PNG files generated from QMD\n")
     }
   } else if (!is.null(args$submission_image)) {
     # Use provided submission image
