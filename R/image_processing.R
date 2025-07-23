@@ -77,7 +77,6 @@ process_image <- function(args, prompt, system_instructions) {
   if (grepl("\\{solution_image\\}", prompt_content)) {
     solution_image <- args$solution_image
   }
-
   request_text <- paste0(rendered_prompt, "\n\n",
                          paste(stats::na.omit(c(submission_images, solution_image)), collapse = ", "))
   
