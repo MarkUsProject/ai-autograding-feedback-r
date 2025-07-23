@@ -18,30 +18,35 @@ OpenAIModel <- R6Class("OpenAIModel",
       }
     },
 
-    generate_response = function(prompt, system_instructions, submission_image = NULL, solution_image = NULL) {
+    generate_response = function(prompt, system_instructions, submission_images = NULL, solution_image = NULL) {
       #' Generate a model response using the OpenAI API, including optional images.
       #' @param prompt User prompt
       #' @param system_instructions System-level instructions for the model
-      #' @param submission_image Optional file path to submission image
+      #' @param submission_images Optional file path to submission images
       #' @param solution_image Optional file path to solution image
       #' @return A list with the original prompt and the model's response or error message
-
       response_text <- tryCatch({
         url <- "https://api.openai.com/v1/chat/completions"
 
         headers <- add_headers(
-          Authorization = paste("Bearer", self$api_key),
-          `Content-Type` = "application/json"
+          'Authorization' = paste('Bearer', self$api_key),
+          'Content-Type' = 'application/json'
         )
 
-        # Prepare image attachments if provided
         image_blocks <- list()
-        if (!is.null(submission_image)) {
-          image_blocks <- append(image_blocks, list(list(
-            type = "image_url",
-            image_url = list(url = paste0("data:image/png;base64,", base64encode(submission_image)))
-          )))
+        
+        # Handle multiple submission images from QMD/RMD processing
+        if (!is.null(submission_images)) {
+          for (i in seq_along(submission_images)) {
+            submission_img <- submission_images[i]
+            image_blocks <- append(image_blocks, list(list(
+              type = "image_url",
+              image_url = list(url = paste0("data:image/png;base64,", base64encode(submission_img)))
+            )))
+          }
         }
+        
+        # Handle solution image
         if (!is.null(solution_image)) {
           image_blocks <- append(image_blocks, list(list(
             type = "image_url",
@@ -68,7 +73,7 @@ OpenAIModel <- R6Class("OpenAIModel",
           temperature = 0.5
         ), auto_unbox = TRUE)
 
-        res <- POST(url, headers, body = body)
+        res <- POST(url, body = body, encode = "raw", config = headers)
 
         if (res$status_code != 200) {
           stop("OpenAI API call failed: ", content(res, "text"))

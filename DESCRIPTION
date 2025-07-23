@@ -11,15 +11,19 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.1
 Imports:
     base64enc,
+    callr,
     dotenv,
+    ggplot2,
     httr,
     jsonlite,
     magick,
     optparse,
     pdftools,
     R6,
+    readr,
     stringr,
-    tools
+    tools,
+    withr
 Suggests: 
     testthat (>= 3.0.0),
     here

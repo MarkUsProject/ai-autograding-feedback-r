@@ -26,7 +26,7 @@ RemoteModel <- R6Class("RemoteModel",
     generate_response = function(
       prompt,
       system_instructions,
-      submission_image = NULL,
+      submission_images = NULL,
       solution_image = NULL
     ) {
       #' Generate a model response using the prompt and optional file paths.

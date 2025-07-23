@@ -32,6 +32,7 @@ This version exposes a direct `main()` function instead of using a CLI, making i
 | `solution_image`     | Path to reference image                                     | ❌        |
 | `output_template`    | Output template name (default: `response_only`)             | ❌        |
 | `system_prompt`      | Name of system prompt in `data/prompts/system/`             | ❌        |
+| `question`           | Exact question/subquestion to test                          | ❌        |
 
 **Note**: You must provide **one** of `prompt`, `prompt_text`, or `prompt_custom`.
 
@@ -81,17 +82,13 @@ main(
 
 ## Prompts
 
-Prompts live in `data/prompts/user/` as markdown files and may include placeholders such as:
+Prompts may include placeholders such as:
 
 * `{context}`
 * `{file_contents}`
+* `{file_references}`
 * `{submission_image}`
 * `{solution_image}`
-
-Prompt prefix rules:
-* Code: starts with `code_`
-* Text: starts with `text_`
-* Image: starts with `image_`
 
 If your scope and prompt don't match (e.g., `scope = "code"` with a `text_*.md`), the function will stop with an error.
 
@@ -115,17 +112,21 @@ Default template: `response_only.md`
 
 ```
 ai-feedback/
-├── main.R                  # Entrypoint with main
-├── helpers/
-│   └── install_dependencies.R
-├── code_processing.R
-├── text_processing.R
-├── image_processing.R
-├── data/
-│   ├── prompts/
-│   │   ├── user/           # User prompts (.md)
-│   │   └── system/         # System prompts (.md)
-│   └── output/             # Markdown output templates
+├── R/
+│   └── code_processing.R
+│   └── text_processing.R
+│   └── image_processing.R
+│   └── main.R 
+│   └── template_utils.R
+│   └── constants.R
+│   └── ClaudeModel.R
+│   └── OpenAIModel.R
+│   └── RemoteModel.R
+├── man/
+├── tests/
+│   ├── fixtures/
+│   ├── testthat/
+│   ├── testthat.R
 ```
 
 ---
@@ -134,14 +135,25 @@ ai-feedback/
 
 ### 1. Install Dependencies
 
+Imports:
+- `base64enc`
+- `callr`
+- `dotenv`
+- `ggplot2`
+- `httr`
 - `jsonlite`
 - `magick`
-- `base64enc`
+- `optparse`
+- `pdftools`
+- `R6`
+- `readr`
 - `stringr`
 - `tools`
-- `httr`
-- `dotenv`
-- `R6`
+- `withr`
+
+Suggests:
+- `testthat` (>= 3.0.0)
+- `here`
 
 ### 2. Set API Key
 
