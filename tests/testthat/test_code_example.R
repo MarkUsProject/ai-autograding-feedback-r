@@ -34,9 +34,9 @@ tests <- list(
       scope = "code",
       model = "openai",
       prompt_custom = custom_prompt,
-      submission = file.path(path, "sta130_code_example/fail_submission/fail_submission.R"),
-      solution = file.path(path, "sta130_code_example/solution.R"),
-      output = "output/test_sta_130_code_openai.md"
+      submission = file.path(path, "code_example/fail_submission/fail_submission.R"),
+      solution = file.path(path, "code_example/solution.R"),
+      output = "output/test_code_example_openai.md"
     )
   ),
   list(
@@ -45,9 +45,9 @@ tests <- list(
       scope = "code",
       model = "claude",
       prompt_custom = custom_prompt,
-      submission = file.path(path, "sta130_code_example/fail_submission/fail_submission.R"),
-      solution = file.path(path, "sta130_code_example/solution.R"),
-      output = "output/test_sta_130_code_claude.md"
+      submission = file.path(path, "code_example/fail_submission/fail_submission.R"),
+      solution = file.path(path, "code_example/solution.R"),
+      output = "output/tes_code_example_claude.md"
     )
   ),
   list(
@@ -56,9 +56,9 @@ tests <- list(
       scope = "code",
       model = "remote",
       prompt_custom = custom_prompt,
-      submission = file.path(path, "sta130_code_example/fail_submission/fail_submission.R"),
-      solution = file.path(path, "sta130_code_example/solution.R"),
-      output = "output/test_sta_130_code_remote.md"
+      submission = file.path(path, "code_example/fail_submission/fail_submission.R"),
+      solution = file.path(path, "code_example/solution.R"),
+      output = "output/test_code_example_remote.md"
     )
   )
 )

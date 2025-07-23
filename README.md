@@ -70,8 +70,8 @@ main(
   prompt = "code_table",
   scope = "code",
   model = "remote",
-  submission = "test_submissions/sta130_code_example/fail_submission/fail_submission.R",
-  solution = "test_submissions/sta130_code_example/solution.R",
+  submission = "test_submissions/code_example/fail_submission/fail_submission.R",
+  solution = "test_submissions/code_example/solution.R",
   system_prompt = "student_test_feedback",
   output_template = "response_only",
   output = "output/q1.md"

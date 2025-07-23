@@ -1,6 +1,6 @@
 test_that("QMD chunk extraction works correctly", {
   # Use direct path that works with source() calls
-  qmd_path <- "../fixtures/sta130-example/submission.qmd"
+  qmd_path <- "../fixtures/sta130_example/submission.qmd"
   
   skip_if(!file.exists(qmd_path), "Test QMD file not found")
   
@@ -17,7 +17,7 @@ test_that("QMD chunk extraction works correctly", {
 
 test_that("PNG generation works correctly", {
   # Use direct path that works with source() calls
-  qmd_path <- "../fixtures/sta130-example/submission.qmd"
+  qmd_path <- "../fixtures/sta130_example/submission.qmd"
   
   skip_if(!file.exists(qmd_path), "Test QMD file not found")
   
