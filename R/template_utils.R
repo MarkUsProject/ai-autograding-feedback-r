@@ -552,29 +552,3 @@ extract_qmd_chunks_with_context <- function(qmd_path) {
   
   return(chunk_list)
 }
-
-#' Legacy wrapper for backward compatibility
-#' @param qmd_path Path to QMD file
-#' @param target_question Question section
-#' @param output_dir Output directory
-#' @return Character vector of PNG file paths
-execute_student_code_for_images <- function(qmd_path, target_question = NULL, output_dir = NULL) {
-  all_png_files <- run_qmd_collect_png(qmd_path, timeout = 60, output_dir = output_dir)
-  
-  # If target_question specified, filter results
-  if (!is.null(target_question)) {
-    question_pattern <- if (grepl("^\\([a-z]\\)$", target_question)) {
-      # Sub-question like "(a)"
-      paste0("__", gsub("[^a-z]", "", target_question), "__")
-    } else if (grepl("^[Qq]uestion\\s*\\d+", target_question)) {
-      # Main question like "Question 1"  
-      paste0("Q", gsub(".*([0-9]+).*", "\\1", target_question), "__")
-    } else {
-      target_question
-    }
-    
-    all_png_files <- all_png_files[grepl(question_pattern, basename(all_png_files))]
-  }
-  
-  return(all_png_files)
-}

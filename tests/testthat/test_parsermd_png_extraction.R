@@ -1,6 +1,6 @@
 test_that("QMD chunk extraction works correctly", {
   # Use direct path that works with source() calls
-  qmd_path <- "tests/fixtures/sta130-example/submission.qmd"
+  qmd_path <- "../fixtures/sta130-example/submission.qmd"
   
   skip_if(!file.exists(qmd_path), "Test QMD file not found")
   
@@ -17,7 +17,7 @@ test_that("QMD chunk extraction works correctly", {
 
 test_that("PNG generation works correctly", {
   # Use direct path that works with source() calls
-  qmd_path <- "tests/fixtures/sta130-example/submission.qmd"
+  qmd_path <- "../fixtures/sta130-example/submission.qmd"
   
   skip_if(!file.exists(qmd_path), "Test QMD file not found")
   
@@ -44,10 +44,6 @@ test_that("PNG generation works correctly", {
     existing_files <- png_files[file.exists(png_files)]
     expect_gte(length(existing_files), 0, "Files should exist if returned")
   }
-  
-  # Test question filtering with legacy wrapper
-  legacy_result <- execute_student_code_for_images(qmd_path, "(b)", temp_output_dir)
-  expect_true(is.character(legacy_result), "Legacy wrapper should return character vector")
   
   # Clean up
   if (dir.exists(temp_output_dir)) {
