@@ -79,7 +79,7 @@ process_image <- function(args, prompt, system_instructions) {
   }
   request_text <- paste0(rendered_prompt, "\n\n",
                          paste(stats::na.omit(c(submission_images, solution_image)), collapse = ", "))
-  
+
   model_class <- model_mapping[[args$model]]
   if (is.null(model_class)) {
     stop("Invalid model selected for image scope.")
