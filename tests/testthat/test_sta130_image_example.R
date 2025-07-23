@@ -32,10 +32,10 @@ tests <- list(
       scope = "image",
       model = "openai", 
       prompt_custom = custom_prompt,
-      submission = "../fixtures/sta130-example/submission.qmd",
+      submission = "../fixtures/sta130_example/submission.qmd",
       solution = NULL,
       question = "Question 1",
-      output = "tests/output/test_sta130_image_openai.md"
+      output = "output/test_sta130_image_openai.md"
     )
   ),
   list(
@@ -44,10 +44,10 @@ tests <- list(
       scope = "image",
       model = "claude",
       prompt_custom = custom_prompt,
-      submission = "../fixtures/sta130-example/submission.qmd",
+      submission = "../fixtures/sta130_example/submission.qmd",
       solution = NULL,
       question = "Question 1",
-      output = "tests/output/test_sta130_image_claude.md"
+      output = "output/test_sta130_image_claude.md"
     )
   ),
   list(
@@ -56,16 +56,16 @@ tests <- list(
       scope = "image",
       model = "openai",
       prompt_custom = custom_prompt,
-      submission = "../fixtures/sta130-example/submission.qmd",
+      submission = "../fixtures/sta130_example/submission.qmd",
       solution = NULL,
       question = "Q1__c",
-      output = "tests/output/test_sta130_image_openai_question.md"
+      output = "output/test_sta130_image_openai_question.md"
     )
   )
 )
 
 # Test the QMD PNG generation workflow
-qmd_path <- "../fixtures/sta130-example/submission.qmd"
+qmd_path <- "../fixtures/sta130_example/submission.qmd"
 if (file.exists(qmd_path)) {
   
   # Test PNG generation directly
