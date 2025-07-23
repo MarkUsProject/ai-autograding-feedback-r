@@ -498,30 +498,36 @@ extract_qmd_chunks_with_context <- function(qmd_path) {
   current_chunk_code <- character(0)
   chunk_start_line <- 0
   
+  # Helper function to clean heading text into context tag
+  clean_heading_text <- function(text) {
+    text <- trimws(text)
+    
+    # Extract common patterns first
+    if (grepl("^\\([a-z]\\)", text)) {
+      return(gsub("[^a-z]", "", regmatches(text, regexpr("\\([a-z]\\)", text))))
+    }
+    
+    if (grepl("^(Question|Problem|Exercise)\\s*[0-9]+", text, ignore.case = TRUE)) {
+      number_match <- regmatches(text, regexpr("[0-9]+", text))
+      prefix <- if (grepl("^Question", text, ignore.case = TRUE)) "Q" else 
+                if (grepl("^Problem", text, ignore.case = TRUE)) "P" else "E"
+      return(paste0(prefix, number_match))
+    }
+    
+    # For other cases, clean and truncate
+    text <- gsub("[^a-zA-Z0-9]", "_", text)
+    text <- gsub("_+", "_", text)
+    text <- substr(text, 1, 20)
+    text <- gsub("^_|_$", "", text)
+    
+    if (text == "") text <- "unknown"
+    return(text)
+  }
+  
   for (i in seq_along(content)) {
     line <- trimws(content[i])
     
-    if (grepl("^# ", line)) {
-      # Main question: # Question 1
-      if (grepl("^# Question [0-9]+", line, ignore.case = TRUE)) {
-        match <- regmatches(line, regexpr("[0-9]+", line))
-        if (length(match) > 0) {
-          current_main <- paste0("Q", match[1])
-          current_sub <- NULL
-        }
-      }
-    } else if (grepl("^## ", line)) {
-      # Sub-question: ## (a)
-      if (grepl("^## \\([a-z]\\)", line)) {
-        match <- regmatches(line, regexpr("\\([a-z]\\)", line))
-        if (length(match) > 0) {
-          sub_letter <- gsub("[^a-z]", "", match[1])
-          current_sub <- sub_letter
-        }
-      }
-    }
-    
-    # Handle R code chunks
+    # Handle R code chunks first
     if (grepl("^```\\{r", line)) {
       in_r_chunk <- TRUE
       current_chunk_code <- character(0)
@@ -547,6 +553,15 @@ extract_qmd_chunks_with_context <- function(qmd_path) {
       
     } else if (in_r_chunk) {
       current_chunk_code <- c(current_chunk_code, content[i])
+    } else if (!in_r_chunk && grepl("^# ", line)) {
+      # extract everything after "# " when not in R chunk
+      heading_text <- sub("^# ", "", line)
+      current_main <- clean_heading_text(heading_text)
+      current_sub <- NULL
+    } else if (!in_r_chunk && grepl("^## ", line)) {
+      # extract everything after "## " when not in R chunk
+      heading_text <- sub("^## ", "", line)
+      current_sub <- clean_heading_text(heading_text)
     }
   }
   
