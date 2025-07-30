@@ -10,12 +10,13 @@
 #'        scope, solution path, optional question, and test output file.
 #' @param prompt The user-defined prompt string, possibly with placeholders.
 #' @param system_instructions A string passed to the model with system-level instructions.
+#' @param marking_instructions Optional marking instructions
 #'
 #' @return A list of two elements: the full request string and the model's response.
 #'
 #' @examples
 #' result <- process_code(args, prompt, system_instructions)
-process_code <- function(args, prompt, system_instructions) {
+process_code <- function(args, prompt, system_instructions, marking_instructions = NULL) {
   if (!file.exists(args$submission)) {
     stop(paste("Submission file not found:", args$submission))
   }
@@ -43,6 +44,7 @@ process_code <- function(args, prompt, system_instructions) {
     solution = solution_file,
     test_output = test_output_file,
     question = args$question,
+    marking_instructions = marking_instructions
   )
 
   model_class <- model_mapping[[args$model]]

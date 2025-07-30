@@ -1,7 +1,7 @@
 library(base64enc)
 library(magick)
 
-process_image <- function(args, prompt, system_instructions) {
+process_image <- function(args, prompt, system_instructions, marking_instructions = NULL) {
   submission_file <- args$submission
   if (!is.null(args$solution)) {
     solution_file <- args$solution
@@ -70,6 +70,7 @@ process_image <- function(args, prompt, system_instructions) {
     has_submission_image = grepl("\\{submission_image\\}", prompt_content),
     has_solution_image = grepl("\\{solution_image\\}", prompt_content),
     question = args$question,
+    marking_instructions = marking_instructions
   )
 
   # Build prompt image list for OpenAI
