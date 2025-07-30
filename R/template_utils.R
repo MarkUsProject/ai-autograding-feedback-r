@@ -11,6 +11,7 @@ library(pdftools)
 #' @param has_submission_image Whether submission image is present
 #' @param has_solution_image Whether solution image is present
 #' @param question Question identifier
+#' @param marking_instructions Marking instructions
 #' @param ... Additional key-value pairs for placeholder replacement
 #'
 #' @return Character string with placeholders replaced
@@ -25,11 +26,19 @@ render_prompt_template <- function(
   has_submission_image = FALSE,
   has_solution_image = FALSE,
   question = NULL,
+  marking_instructions = NULL,
   ...
 ) {
   
   # Start with additional arguments
   template_data <- list(...)
+  
+  # Handle marking instructions placeholder
+  if (!is.null(marking_instructions)) {
+    template_data$marking_instructions <- marking_instructions
+  } else if (grepl("\\{marking_instructions\\}", prompt_content)) {
+    template_data$marking_instructions <- ""
+  }
   
   # Generate file references if needed
   if (grepl("\\{file_references\\}", prompt_content)) {

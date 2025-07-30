@@ -27,12 +27,24 @@ main <- function(
   solution_image = NULL,
   output_template = NULL,
   system_prompt = NULL,
-  question = NULL
+  question = NULL,
+  marking_instructions = NULL
 ) {
   prompt_content <- ""
   system_instructions <- ""
+  marking_instructions_content <- NULL
+  
   if (!is.null(system_prompt) && system_prompt != ""){
     system_instructions <- paste(readLines(system_prompt), collapse = "\n")
+  }
+
+  # Load marking instructions if provided
+  if (!is.null(marking_instructions) && marking_instructions != "") {
+    tryCatch({
+      marking_instructions_content <- paste(readLines(marking_instructions), collapse = "\n")
+    }, error = function(e) {
+      stop("Error reading marking instructions file")
+    })
   }
 
   if (!is.null(prompt_custom)) {
@@ -54,11 +66,11 @@ main <- function(
   }
 
   if (scope == "image") {
-    response <- process_image(environment(), prompt_content, system_instructions)
+    response <- process_image(environment(), prompt_content, system_instructions, marking_instructions_content)
   } else if (scope == "text") {
-    response <- process_text(environment(), prompt_content, system_instructions)
+    response <- process_text(environment(), prompt_content, system_instructions, marking_instructions_content)
   } else {
-    response <- process_code(environment(), prompt_content, system_instructions)
+    response <- process_code(environment(), prompt_content, system_instructions, marking_instructions_content)
   }
 
   if (!is.null(output_template) && file.exists(output_template)) {

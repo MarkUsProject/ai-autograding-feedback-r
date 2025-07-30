@@ -33,6 +33,7 @@ This version exposes a direct `main()` function instead of using a CLI, making i
 | `output_template`    | Output template name (default: `response_only`)             | ❌        |
 | `system_prompt`      | Name of system prompt in `data/prompts/system/`             | ❌        |
 | `question`           | Exact question/subquestion to test                          | ❌        |
+| `marking_instructions` | Marking instructions/rubric file path                     | ❌        |
 
 **Note**: You must provide **one** of `prompt`, `prompt_text`, or `prompt_custom`.
 
@@ -89,6 +90,7 @@ Prompts may include placeholders such as:
 * `{file_references}`
 * `{submission_image}`
 * `{solution_image}`
+* `{marking_instructions}`
 
 If your scope and prompt don't match (e.g., `scope = "code"` with a `text_*.md`), the function will stop with an error.
 
