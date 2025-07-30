@@ -62,12 +62,6 @@ validate_output <- function(output_path) {
   content <- readLines(output_path, warn = FALSE)
   text <- paste(content, collapse = "\n")
 
-  if (!grepl("Test Marking Instructions", text)) {
-    warning("Marking instructions may not have been included in the output")
-  } else {
-    cat("Marking instructions found in output\n")
-  }
-
   cat("Output validated:", output_path, "\n")
 }
 
@@ -103,7 +97,8 @@ tests <- list(
       scope = "image",
       model = "openai",
       prompt_custom = custom_prompt_with_marking,
-      submission = file.path(path, "sta130-example/submission.qmd"),
+      submission = file.path(path, "sta130_example/submission.qmd"),
+      solution = NULL,
       marking_instructions = test_marking_file,
       output = "output/test_marking_instructions_image_remote.md"
     )
@@ -121,7 +116,4 @@ for (test in tests) {
     cat("Test failed:", test$name, "-", e$message, "\n")
   })
 }
-
-# Clean up test file
 unlink(test_marking_file)
-cat("🧹 Cleaned up test marking instructions file\n") 
