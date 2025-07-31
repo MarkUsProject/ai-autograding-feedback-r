@@ -1,13 +1,7 @@
 #!/usr/bin/env Rscript
 
-# Test if we can load the package and helpers
-tryCatch({
-  source("../r_helpers.R")
-  cat("Successfully loaded r_helpers.R\n")
-}, error = function(e) {
-  cat("Error loading r_helpers.R:", e$message, "\n")
-  quit(status = 1)
-})
+# Load helper functions
+source("../r_helpers.R")
 
 # Test basic LLM function with a simple example
 test_basic_functionality <- function() {
@@ -151,6 +145,34 @@ test_markus_formatting <- function() {
   cat("Markus formatting functions executed successfully\n")
 }
 
+# Test that illustrates MarkUs metadata attributes (following the PR pattern)
+test_markus_metadata_attributes <- function() {
+  cat("Testing MarkUs metadata attributes integration\n")
+  
+  tryCatch({
+    test_result <- list(
+      type = "success",
+      message = "",
+      markus_overall_comments = "This is an overall comment for R testing. Great job!",
+      markus_tag = "good",
+      markus_annotation = list(
+        filename = "student_submission.R",
+        content = "This function demonstrates good R practices",
+        line_start = 3,
+        line_end = 3,
+        column_start = 1,
+        column_end = 25
+      )
+    )
+    
+    cat("MARKUS_METADATA:", toJSON(test_result, auto_unbox = TRUE), "\n")
+    cat("MarkUs metadata attributes test completed successfully\n")
+    
+  }, error = function(e) {
+    cat("Error in MarkUs metadata test:", e$message, "\n")
+  })
+}
+
 main <- function() {
   cat("Starting Markus integration tests...\n")
   
@@ -158,6 +180,7 @@ main <- function() {
   test_fixture_integration()
   test_qmd_fixture()
   test_markus_formatting()
+  test_markus_metadata_attributes()
 }
 
 if (!interactive()) {
