@@ -104,7 +104,6 @@ main <- function() {
   }
 }
 
-# Execute main function if script is run directly
 if (!interactive()) {
   main()
 } 

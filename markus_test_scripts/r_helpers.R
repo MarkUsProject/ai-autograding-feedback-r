@@ -98,9 +98,9 @@ run_llm_r <- function(
     # Use default prompts
     if (prompt %in% names(DEFAULT_PROMPTS)) {
       prompt_content <- DEFAULT_PROMPTS[[prompt]]
-      cat("✓ Using default prompt:", prompt, "\n")
+      cat("Using default prompt:", prompt, "\n")
     } else {
-      cat("⚠ Warning: Predefined prompt '", prompt, "' not found. Using fallback.\n")
+      cat("Warning: Predefined prompt '", prompt, "' not found. Using fallback.\n")
       prompt_content <- DEFAULT_PROMPTS[[paste0(scope, "_overall")]] %||% 
                        "Analyze the student's submission and provide detailed feedback."
     }
@@ -293,6 +293,53 @@ generate_annotations_r <- function(llm_feedback, model = "claude", submission_fi
   }
   
   return(list())
+}
+
+#' Generate MarkUs metadata attributes (following the Python tester PR pattern)
+#'
+#' @param type Test result type ("success", "failure", "warning")
+#' @param message Optional message
+#' @param overall_comments Overall feedback comments
+#' @param tag Tag for categorizing the result ("good", "needs_improvement", "excellent")
+#' @param annotations List of annotation objects
+#' @return JSON string with MarkUs metadata
+generate_markus_metadata <- function(type = "success", message = "", overall_comments = "", tag = "good", annotations = list()) {
+  metadata <- list(
+    type = type,
+    message = message,
+    markus_overall_comments = overall_comments,
+    markus_tag = tag,
+    markus_annotation = annotations
+  )
+  
+  return(toJSON(metadata, auto_unbox = TRUE))
+}
+
+#' Create a MarkUs annotation object
+#'
+#' @param filename Name of the file being annotated
+#' @param content Annotation content/message
+#' @param line_start Starting line number
+#' @param line_end Ending line number  
+#' @param column_start Starting column number
+#' @param column_end Ending column number
+#' @return List representing an annotation
+create_markus_annotation <- function(filename, content, line_start, line_end, column_start = 1, column_end = 1) {
+  return(list(
+    filename = filename,
+    content = content,
+    line_start = line_start,
+    line_end = line_end,
+    column_start = column_start,
+    column_end = column_end
+  ))
+}
+
+#' Output MarkUs metadata in the expected format
+#'
+#' @param metadata_json JSON string with MarkUs metadata
+output_markus_metadata <- function(metadata_json) {
+  cat("MARKUS_METADATA:", metadata_json, "\n")
 }
 
 # Utility function for null coalescing
