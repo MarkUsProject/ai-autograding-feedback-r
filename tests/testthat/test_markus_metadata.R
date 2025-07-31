@@ -68,4 +68,3 @@ test_that("MarkUs metadata for image analysis", {
     )
   ))
 })
- 
