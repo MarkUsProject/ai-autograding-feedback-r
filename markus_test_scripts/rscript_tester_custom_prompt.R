@@ -19,35 +19,24 @@ test_with_feedback <- function() {
     return("")
   }
   
-  # Try to load custom prompt from file
-  custom_prompt_content <- NULL
+  # Check for custom prompt file first
   if (file.exists("custom_prompt.txt")) {
-    custom_prompt_content <- paste(readLines("custom_prompt.txt"), collapse = "\n")
-  } else {
-    # Fallback to embedded custom prompt
-    custom_prompt_content <- paste(
-      "Compare the student's code and solution code. Create a final evaluation table with three columns:",
-      "the task requirements, the student's attempt, potential issue.",
-      "If possible, identify the root causes of errors that lead to further issues later in the code.",
-      "Prioritize fixing the earliest instances where the code breaks to prevent cascading failures.",
-      "",
-      "{file_references}",
-      "",
-      "Files to Reference:",
-      "{file_contents}",
-      sep = "\n"
+    custom_prompt <- paste(readLines("custom_prompt.txt", warn = FALSE), collapse = "\n")
+    
+    llm_feedback <<- run_llm_r(
+      prompt_text = custom_prompt,
+      scope = "code",
+      model = "claude",
+      submission_file = SUBMISSION_FILE,
+      solution_file = SOLUTION_FILE
     )
+  } else {
+    # Error if no custom prompt found
+    llm_feedback <<- "Error: custom_prompt.txt file not found. This tester requires a custom prompt file."
+    cat("Error: custom_prompt.txt file not found\n")
+    cat("Please create a custom_prompt.txt file with your custom prompt content\n")
+    return("")
   }
-  
-  llm_feedback <<- run_llm_r(
-    prompt_text = custom_prompt_content,
-    scope = "code",
-    model = "claude",
-    output = "stdout",
-    question = QUESTION_TEXT,
-    submission_file = SUBMISSION_FILE,
-    solution_file = if(file.exists(SOLUTION_FILE)) SOLUTION_FILE else NULL
-  )
   
   add_markus_message(llm_feedback)
   add_markus_overall_comments(llm_feedback)

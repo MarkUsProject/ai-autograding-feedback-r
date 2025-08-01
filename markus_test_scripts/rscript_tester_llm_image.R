@@ -19,27 +19,12 @@ test_with_feedback <- function() {
     return("")
   }
   
-  # Create actual prompt content for image analysis
-  prompt_content <- paste(
-    "Analyze the student's plot/figure and provide detailed feedback on:",
-    "1. Data visualization best practices",
-    "2. Chart type appropriateness", 
-    "3. Axis labels and titles",
-    "4. Color choices and readability",
-    "5. Overall clarity and effectiveness",
-    "",
-    "Compare with solution if provided and suggest specific improvements.",
-    sep = "\n"
-  )
-  
   llm_feedback <<- run_llm_r(
-    prompt_text = prompt_content,
+    prompt = "image_prompt",
     scope = "image",
     model = "claude",
-    output = "stdout",
-    question = QUESTION_TEXT,
     submission_file = SUBMISSION_FILE,
-    solution_file = if(file.exists(SOLUTION_FILE)) SOLUTION_FILE else NULL
+    solution_file = SOLUTION_FILE
   )
   
   add_markus_message(llm_feedback)
@@ -68,7 +53,6 @@ test_with_annotations <- function() {
       prompt_text = annotation_prompt,
       scope = "image",
       model = "claude",
-      output = "direct",
       submission_file = SUBMISSION_FILE
     )
     

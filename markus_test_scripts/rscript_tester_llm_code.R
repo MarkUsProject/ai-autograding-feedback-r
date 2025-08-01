@@ -19,28 +19,12 @@ test_with_feedback <- function() {
     return("")
   }
   
-  # Create actual prompt content instead of referencing non-existent predefined prompts
-  prompt_content <- paste(
-    "Compare the student's code and solution code. Create a final evaluation table with three columns:",
-    "the task requirements, the student's attempt, potential issue.",
-    "If possible, identify the root causes of errors that lead to further issues later in the code.",
-    "Prioritize fixing the earliest instances where the code breaks to prevent cascading failures.",
-    "",
-    "{file_references}",
-    "",
-    "Files to Reference:",
-    "{file_contents}",
-    sep = "\n"
-  )
-  
   llm_feedback <<- run_llm_r(
-    prompt_text = prompt_content,
+    prompt = "code_prompt",
     scope = "code",
     model = "claude",
-    output = "stdout",
-    question = QUESTION_TEXT,
     submission_file = SUBMISSION_FILE,
-    solution_file = if(file.exists(SOLUTION_FILE)) SOLUTION_FILE else NULL
+    solution_file = SOLUTION_FILE
   )
   
   add_markus_message(llm_feedback)
@@ -69,7 +53,6 @@ test_with_annotations <- function() {
       prompt_text = annotation_prompt,
       scope = "code",
       model = "claude",
-      output = "direct",
       submission_file = SUBMISSION_FILE
     )
     
