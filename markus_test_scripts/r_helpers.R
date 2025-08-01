@@ -24,53 +24,24 @@ especially when denoting code."
 
 MINIMUM_ANNOTATION_WIDTH <- 8
 
-# Default prompts for different scopes
-DEFAULT_PROMPTS <- list(
-  code_overall = paste(
-    "Analyze the student's code submission and provide comprehensive feedback.",
-    "Focus on:",
-    "1. Correctness and functionality",
-    "2. Code style and best practices", 
-    "3. Logic and algorithm efficiency",
-    "4. Error handling and edge cases",
-    "5. Documentation and readability",
-    "Provide specific, actionable feedback with examples where appropriate.",
-    "{file_contents}",
-    sep = "\n"
-  ),
-  
-  image_overall = paste(
-    "Analyze the student's image/plot submission and provide detailed feedback.",
-    "Evaluate:",
-    "1. Data visualization accuracy",
-    "2. Chart/plot type appropriateness",
-    "3. Axis labels, titles, and legends",
-    "4. Color choices and aesthetics",
-    "5. Overall clarity and readability",
-    "Provide specific suggestions for improvement.",
-    "{submission_image}",
-    sep = "\n"
-  ),
-  
-  text_overall = paste(
-    "Analyze the student's text submission and provide comprehensive feedback.",
-    "Focus on:",
-    "1. Content accuracy and completeness",
-    "2. Writing clarity and organization",
-    "3. Use of appropriate terminology",
-    "4. Supporting evidence and examples",
-    "5. Overall coherence and flow",
-    "Provide constructive feedback with specific suggestions.",
-    "{file_contents}",
-    sep = "\n"
-  )
-)
+#' Read prompt from file
+#'
+#' @param prompt_name Name of the prompt file (without extension)
+#' @param prompts_dir Directory containing prompt files
+#' @return String containing prompt content or NULL if file not found
+read_prompt_from_file <- function(prompt_name, prompts_dir = "examples/prompts") {
+  # All prompts are in markdown format
+  prompt_file <- file.path(prompts_dir, paste0(prompt_name, ".md"))
+  if (file.exists(prompt_file)) {
+    return(paste(readLines(prompt_file, warn = FALSE), collapse = "\n"))
+  }
+  return(NULL)
+}
 
 #' Run LLM analysis using the ai-autograding-feedback-r package
 #'
 #' @param model Model to use ("claude", "openai", etc.)
 #' @param scope Analysis scope ("code", "image", "text")
-#' @param output Output format ("stdout", "direct")
 #' @param prompt_custom Custom prompt text
 #' @param question Optional question context
 #' @param prompt_text Prompt text to use
@@ -81,7 +52,6 @@ DEFAULT_PROMPTS <- list(
 run_llm_r <- function(
   model, 
   scope,
-  output,
   prompt_custom = NULL,
   question = NULL,
   prompt_text = NULL,
@@ -95,48 +65,43 @@ run_llm_r <- function(
   } else if (!is.null(prompt_text)) {
     prompt_content <- prompt_text
   } else if (!is.null(prompt)) {
-    # Use default prompts
-    if (prompt %in% names(DEFAULT_PROMPTS)) {
-      prompt_content <- DEFAULT_PROMPTS[[prompt]]
-      cat("Using default prompt:", prompt, "\n")
-    } else {
-      cat("Warning: Predefined prompt '", prompt, "' not found. Using fallback.\n")
-      prompt_content <- DEFAULT_PROMPTS[[paste0(scope, "_overall")]] %||% 
-                       "Analyze the student's submission and provide detailed feedback."
+    prompt_content <- read_prompt_from_file(prompt)
+    if (is.null(prompt_content)) {
+      stop(paste("Prompt file not found:", prompt, ". Please ensure the prompt file exists in examples/prompts/"))
     }
   } else {
-    # Use default prompt based on scope
-    default_prompt_key <- paste0(scope, "_overall")
-    prompt_content <- DEFAULT_PROMPTS[[default_prompt_key]] %||% 
-                     "Analyze the student's submission and provide detailed feedback."
+    default_prompt_key <- paste0(scope, "_prompt")
+    prompt_content <- read_prompt_from_file(default_prompt_key)
+    
+    if (is.null(prompt_content)) {
+      stop(paste("Prompt file not found:", default_prompt_key, ". Please ensure the prompt file exists in examples/prompts/"))
+    }
   }
   
   tryCatch({
-    # Create args list for the processing functions
+    # Prepare arguments list for main function
     args <- list(
+      prompt_custom = prompt_content,
+      scope = scope,
       submission = submission_file %||% "student_submission.R",
-      solution = solution_file,
+      solution = solution_file %||% "",
       model = model,
       remote_model = "",
-      question = question,
-      test_output = NULL
+      question = question
     )
     
-    # Call the appropriate processing function directly
-    if (scope == "image") {
-      result <- process_image(args, prompt_content, "", NULL)
-      # For image processing, result is list(request_text, list(prompt, response))
-      # We want the response part: result[[2]]$response
-      return(result[[2]]$response)
-    } else if (scope == "text") {
-      result <- process_text(args, prompt_content, "", NULL)
-      # For text processing, result is list(request_text, response)
-      return(result[[2]])
+    pkg_env <- as.environment("package:aifeedbackr")
+    if (exists("main", envir = pkg_env)) {
+      main_fn <- get("main", envir = pkg_env)
     } else {
-      result <- process_code(args, prompt_content, "", NULL)
-      # For code processing, result is list(request_text, response)
-      return(result[[2]])
+      # Fallback: search in loaded namespaces
+      main_fn <- get("main", envir = asNamespace("aifeedbackr"))
     }
+    
+    output <- capture.output(do.call(main_fn, args))
+    
+    result_text <- paste(output, collapse = "\n")
+    return(result_text)
   }, error = function(e) {
     return(paste("Error calling LLM API:", e$message))
   })
@@ -277,8 +242,7 @@ generate_annotations_r <- function(llm_feedback, model = "claude", submission_fi
   raw_annotation <- run_llm_r(
     model = model,
     prompt_text = prompt,
-    scope = "code", 
-    output = "direct",
+    scope = "code",
     submission_file = submission_file
   )
   
@@ -343,4 +307,10 @@ output_markus_metadata <- function(metadata_json) {
 }
 
 # Utility function for null coalescing
-`%||%` <- function(x, y) if (is.null(x)) y else x
+`%||%` <- function(x, y) {
+  if (is.null(x)) {
+    return(y)
+  } else {
+    return(x)
+  }
+}

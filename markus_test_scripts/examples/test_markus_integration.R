@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 
 # Load helper functions
-source("../r_helpers.R")
+source("r_helpers.R")
 
 # Test basic LLM function with a simple example
 test_basic_functionality <- function() {
@@ -11,21 +11,9 @@ test_basic_functionality <- function() {
   tryCatch({
     # Test code analysis
     result <- run_llm_r(
-      prompt_text = paste(
-        "Compare the student's code and solution code. Create a final evaluation table with three columns:",
-        "the task requirements, the student's attempt, potential issue.",
-        "If possible, identify the root causes of errors that lead to further issues later in the code.",
-        "Prioritize fixing the earliest instances where the code breaks to prevent cascading failures.",
-        "",
-        "{file_references}",
-        "",
-        "Files to Reference:",
-        "{file_contents}",
-        sep = "\n"
-      ),
-      scope = "code", 
+      prompt = "code_prompt",
+      scope = "code",
       model = "claude",
-      output = "direct",
       submission_file = "test_submission.R"
     )
     
@@ -48,28 +36,16 @@ test_basic_functionality <- function() {
 test_fixture_integration <- function() {
   
   # Test with existing fixtures
-  fixture_path <- "../../tests/fixtures/code_example/fail_submission/fail_submission.R"
+  fixture_path <- "../tests/fixtures/code_example/fail_submission/fail_submission.R"
   
   if (file.exists(fixture_path)) {
-    cat("✓ Found test fixture:", fixture_path, "\n")
+    cat("Found test fixture:", fixture_path, "\n")
     
     tryCatch({
       feedback <- run_llm_r(
-        prompt_text = paste(
-          "Compare the student's code and solution code. Create a final evaluation table with three columns:",
-          "the task requirements, the student's attempt, potential issue.",
-          "If possible, identify the root causes of errors that lead to further issues later in the code.",
-          "Prioritize fixing the earliest instances where the code breaks to prevent cascading failures.",
-          "",
-          "{file_references}",
-          "",
-          "Files to Reference:",
-          "{file_contents}",
-          sep = "\n"
-        ),
+        prompt = "code_prompt",
         scope = "code",
         model = "claude",
-        output = "direct",
         submission_file = fixture_path
       )
       
@@ -89,27 +65,16 @@ test_fixture_integration <- function() {
 
 # Test QMD image generation fixture
 test_qmd_fixture <- function() {  
-  qmd_fixture_path <- "../../tests/fixtures/sta130_example/submission.qmd"
+  qmd_fixture_path <- "../tests/fixtures/sta130_example/submission.qmd"
   
   if (file.exists(qmd_fixture_path)) {
     cat("Found QMD fixture:", qmd_fixture_path, "\n")
     
     tryCatch({
       result <- run_llm_r(
-        prompt_text = paste(
-          "Analyze the student's plot/figure and provide detailed feedback on:",
-          "1. Data visualization best practices",
-          "2. Chart type appropriateness", 
-          "3. Axis labels and titles",
-          "4. Color choices and readability",
-          "5. Overall clarity and effectiveness",
-          "",
-          "Compare with solution if provided and suggest specific improvements.",
-          sep = "\n"
-        ),
+        prompt = "image_prompt",
         scope = "image",
-        model = "openai",
-        output = "direct",
+        model = "claude", 
         submission_file = qmd_fixture_path
       )
       
@@ -145,7 +110,7 @@ test_markus_formatting <- function() {
   cat("Markus formatting functions executed successfully\n")
 }
 
-# Test that illustrates MarkUs metadata attributes (following the PR pattern)
+# Test that illustrates MarkUs metadata attributes
 test_markus_metadata_attributes <- function() {
   cat("Testing MarkUs metadata attributes integration\n")
   
@@ -174,7 +139,6 @@ test_markus_metadata_attributes <- function() {
 }
 
 main <- function() {
-  cat("Starting Markus integration tests...\n")
   
   test_basic_functionality()
   test_fixture_integration()
