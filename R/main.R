@@ -12,7 +12,8 @@ load_file <- function(file_path) {
     return(paste(readLines(file_path), collapse = "\n"))
   }
   
-  pkg_path <- system.file(strsplit(file_path, "/")[[1]], package = "aifeedbackr")
+  parts <- strsplit(file_path, "/")[[1]]
+  pkg_path <- do.call(system.file, c(as.list(parts), package = "aifeedbackr"))
   if (nzchar(pkg_path) && file.exists(pkg_path)) {
     return(paste(readLines(pkg_path), collapse = "\n"))
   }

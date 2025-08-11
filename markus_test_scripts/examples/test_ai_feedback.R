@@ -1,6 +1,5 @@
 #!/usr/bin/env Rscript
 
-# Load the student's submission
 source("submission.R")
 
 library(testthat)
@@ -25,17 +24,22 @@ main <- get("main", envir = asNamespace("aifeedbackr"))
   lockBinding("model_mapping", ns)
 }
 
-# Helper to resolve prompt path
-resolve_prompt_path <- function(rel_path) {
-  pkg_path <- system.file(rel_path, package = "aifeedbackr")
-  if (nzchar(pkg_path)) {
+resolve_prompt_path <- function(...) {
+  pkg_path <- system.file(..., package = "aifeedbackr")
+  if (nzchar(pkg_path) && file.exists(pkg_path)) {
     return(pkg_path)
-  } else {
-    return(file.path("markus_test_scripts/examples/prompts", basename(rel_path)))
   }
+  local_path <- file.path("inst", "markus_test_scripts", "examples", "prompts", basename(..1))
+  if (file.exists(local_path)) {
+    return(local_path)
+  }
+  local_path2 <- file.path("markus_test_scripts", "examples", "prompts", basename(..1))
+  if (file.exists(local_path2)) {
+    return(local_path2)
+  }
+  stop(paste("Prompt file not found:", ..1))
 }
 
-# Resolve prompt file paths
 code_prompt_path <- resolve_prompt_path("markus_test_scripts/examples/prompts/code_prompt.md")
 image_prompt_path <- resolve_prompt_path("markus_test_scripts/examples/prompts/image_prompt.md")
 
