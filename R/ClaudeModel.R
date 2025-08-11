@@ -54,7 +54,7 @@ ClaudeModel <- R6Class("ClaudeModel",
         content_blocks <- append(content_blocks, list(encode_image_block(solution_image)))
       }
 
-      body <- toJSON(list(
+      body <- jsonlite::toJSON(list(
         model = self$model_name,
         max_tokens = 1000,
         temperature = 0.5,

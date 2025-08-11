@@ -64,7 +64,7 @@ OpenAIModel <- R6Class("OpenAIModel",
           )
         )
 
-        body <- toJSON(list(
+        body <- jsonlite::toJSON(list(
           model = "gpt-4o",
           messages = messages,
           max_tokens = 1000,

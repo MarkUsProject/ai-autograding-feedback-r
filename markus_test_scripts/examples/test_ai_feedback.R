@@ -26,30 +26,28 @@ main <- get("main", envir = asNamespace("aifeedbackr"))
   lockBinding("model_mapping", ns)
 }
 
+# Resolve prompt file paths relative to installed package
+code_prompt_path <- system.file("markus_test_scripts/examples/prompts/code_prompt.md", package = "aifeedbackr")
+image_prompt_path <- system.file("markus_test_scripts/examples/prompts/image_prompt.md", package = "aifeedbackr")
+
 test_that("AI feedback using prompt file", {
-  # Use a prompt file (like the library normally handles)
   feedback <- main(
     submission = "submission.R",
     scope = "code", 
     model = "claude",
-    prompt = "prompts/code_prompt.md"
+    prompt = code_prompt_path
   )
-  
-  # Basic test that feedback was generated
   expect_true(is.character(feedback))
   expect_true(nchar(feedback) > 0)
 })
 
 test_that("AI feedback with MarkUs metadata using prompt file", {
-  # Generate AI feedback using prompt file
   feedback <- main(
     submission = "submission.R",
     scope = "code",
     model = "claude", 
-    prompt = "prompts/code_prompt.md"
+    prompt = code_prompt_path
   )
-  
-  # Use MarkUs metadata pattern from official examples
   exp_signal(new_expectation(
     type = "success",
     message = "",
@@ -67,7 +65,6 @@ test_that("AI feedback with MarkUs metadata using prompt file", {
 })
 
 test_that("AI feedback with custom prompt", {
-  # Demonstrate custom prompt alongside prompt files
   custom_prompt <- paste(
     "Review this R code focusing on:",
     "1. Syntax correctness and best practices",
@@ -77,18 +74,14 @@ test_that("AI feedback with custom prompt", {
     "Provide specific line-by-line feedback where appropriate.",
     sep = "\n"
   )
-  
   feedback <- main(
     submission = "submission.R",
     scope = "code",
     model = "claude",
     prompt_custom = custom_prompt
   )
-  
   expect_true(is.character(feedback))
   expect_true(nchar(feedback) > 0)
-  
-  # MarkUs metadata for custom prompt analysis
   exp_signal(new_expectation(
     type = "success", 
     message = "",
@@ -106,15 +99,14 @@ test_that("AI feedback with custom prompt", {
 })
 
 test_that("AI feedback for Quarto document using prompt file", {
-  # Generate AI feedback for QMD file using prompt file
   feedback <- main(
     submission = "submission.qmd",
     scope = "image",
     model = "claude",
-    prompt = "prompts/image_prompt.md",
+    prompt = image_prompt_path,
     solution = NULL
   )
-  
   expect_true(is.character(feedback))
   expect_true(nchar(feedback) > 0)
 })
+ 
