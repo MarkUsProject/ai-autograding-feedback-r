@@ -13,6 +13,8 @@ load_file <- function(file_path) {
   paste(readLines(file_path), collapse = "\n")
 }
 
+#' AI feedback entrypoint
+#' @export
 main <- function(
   prompt = NULL,
   prompt_text = NULL,
@@ -73,22 +75,6 @@ main <- function(
     response <- process_code(environment(), prompt_content, system_instructions, marking_instructions_content)
   }
 
-  if (!is.null(output_template) && file.exists(output_template)) {
-    markdown_template <- load_file(output_template)
-  } else {
-    markdown_template <- "{response}"
-  }
-  output_text <- markdown_template
-  output_text <- gsub("\\{model\\}", model, output_text)
-  output_text <- gsub("\\{request\\}", prompt_content, output_text)
-  output_text <- gsub("\\{response\\}", paste(response[[2]], collapse = "\n"), output_text)
-  output_text <- gsub("\\{timestamp\\}", format(Sys.time(), "%Y%m%d_%H%M%S"), output_text)
-  output_text <- gsub("\\{submission\\}", submission, output_text)
-
-  if (output != "") {
-    dir.create(dirname(output), recursive = TRUE, showWarnings = FALSE)
-    writeLines(output_text, output)
-  } else {
-    cat(output_text)
-  }
+  out <- if (is.list(response)) paste(unlist(response), collapse = "\n") else as.character(response)
+  return(out)
 }
