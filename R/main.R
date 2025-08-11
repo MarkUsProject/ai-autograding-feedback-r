@@ -3,14 +3,21 @@
 suppressWarnings(suppressMessages({
   library(optparse)
   library(jsonlite)
+  library(httr)
 }))
 
 # Load markdown output template
 load_file <- function(file_path) {
-  if (!file.exists(file_path)) {
-    stop(paste("Error: Template file not found:", file_path))
+  if (file.exists(file_path)) {
+    return(paste(readLines(file_path), collapse = "\n"))
   }
-  paste(readLines(file_path), collapse = "\n")
+  
+  pkg_path <- system.file(strsplit(file_path, "/")[[1]], package = "aifeedbackr")
+  if (nzchar(pkg_path) && file.exists(pkg_path)) {
+    return(paste(readLines(pkg_path), collapse = "\n"))
+  }
+  
+  stop(paste("Error: Template file not found:", file_path))
 }
 
 #' AI feedback entrypoint
