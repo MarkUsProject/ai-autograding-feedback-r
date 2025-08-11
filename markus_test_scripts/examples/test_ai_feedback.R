@@ -5,6 +5,26 @@ source("submission.R")
 
 library(testthat)
 library(aifeedbackr)
+library(knitr)
+library(R6)
+
+main <- get("main", envir = asNamespace("aifeedbackr"))
+
+# Inject a mock model to avoid external API calls during tests
+{
+  ns <- asNamespace("aifeedbackr")
+  MockModel <- R6::R6Class("MockModel",
+    public = list(
+      initialize = function(...) {},
+      generate_response = function(prompt, system_instructions, submission_images = NULL, solution_image = NULL) {
+        list(prompt = prompt, response = "Mock feedback: analysis complete.")
+      }
+    )
+  )
+  if (bindingIsLocked("model_mapping", ns)) unlockBinding("model_mapping", ns)
+  assign("model_mapping", list(openai = MockModel, claude = MockModel, remote = MockModel), envir = ns)
+  lockBinding("model_mapping", ns)
+}
 
 test_that("AI feedback using prompt file", {
   # Use a prompt file (like the library normally handles)
@@ -86,14 +106,13 @@ test_that("AI feedback with custom prompt", {
 })
 
 test_that("AI feedback for Quarto document using prompt file", {
-  library(knitr)
-  
   # Generate AI feedback for QMD file using prompt file
   feedback <- main(
     submission = "submission.qmd",
     scope = "image",
     model = "claude",
-    prompt = "prompts/image_prompt.md"
+    prompt = "prompts/image_prompt.md",
+    solution = NULL
   )
   
   expect_true(is.character(feedback))
