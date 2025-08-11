@@ -14,4 +14,18 @@ If something has been submitted, do the following:
 6. **Create at least five test cases**, including normal, edge, and invalid inputs. Simulate the execution of the code, comparing expected vs. observed outputs for each case.
 7. **Explain how the student's logic leads to errors** or inefficiencies, instead of just pointing out the mistake or providing full correct solution. Provide **detailed reasoning** and suggestions for future improvement.
 
-Return nothing except the final evaluation. 
+Return nothing except the final evaluation.
+
+After giving the evaluation, also output a JSON code block with any inline annotations you wish to provide in the following format:
+
+```json
+{
+  "annotations": [
+    {
+      "filename": "submission.R",
+      "content": "A short suggestion or correction",
+      "line_start": 10,
+      "line_end": 12
+    }
+  ]
+}

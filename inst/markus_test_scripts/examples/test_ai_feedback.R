@@ -56,29 +56,49 @@ test_that("Generates LLM feedback for code scope", {
   feedback <- as_feedback_text(raw)
   .state$llm_feedback_code <- feedback
 
-  exp_signal(new_expectation(
-    type = "success",
-    message = ifelse(nzchar(feedback), feedback, "[empty feedback]"),
-    markus_overall_comments = feedback
-  ))
-})
-
-test_that("Generates LLM annotations for code scope", {
-  feedback <- .state$llm_feedback_code
-  if (!nzchar(feedback)) {
+  if (nchar(feedback) == 0) {
+    exp_signal(new_expectation(
+      type = "failure",
+      message = "LLM returned empty feedback for code scope.",
+      markus_overall_comment = "[empty feedback]"
+    ))
+    fail("Empty feedback")
+  } else {
     exp_signal(new_expectation(
       type = "success",
-      message = "No prior feedback text; skipping annotation extraction."
+      message = "Posted LLM overall feedback for code scope.",
+      markus_overall_comment = feedback
     ))
-    return(invisible(NULL))
+    succeed()
   }
-  try({
-    add_code_annotations(submission_r_path, feedback)
-  }, silent = TRUE)
-  exp_signal(new_expectation(
-    type = "success",
-    message = "Annotation extraction attempted (if annotations JSON present)."
-  ))
+})
+
+test_that("Emits code annotations when present", {
+  feedback <- .state$llm_feedback_code
+  if (nchar(feedback) == 0) {
+    exp_signal(new_expectation(
+      type = "failure",
+      message = "No prior feedback to extract annotations from.",
+      markus_overall_comment = "No feedback captured in previous step."
+    ))
+    fail("No feedback for annotation extraction")
+  } else {
+    anns <- find_annotations_object(feedback)
+    if (!length(anns)) {
+      exp_signal(new_expectation(
+        type = "success",
+        message = "No annotations found in LLM output; skipping emission."
+      ))
+      succeed()
+    } else {
+      try(add_code_annotations(submission_r_path, feedback), silent = TRUE)
+      exp_signal(new_expectation(
+        type = "success",
+        message = sprintf("Emitted %d code annotations.", length(anns))
+      ))
+      succeed()
+    }
+  }
 })
 
 test_that("Generates LLM feedback for Quarto (image scope)", {
@@ -94,13 +114,23 @@ test_that("Generates LLM feedback for Quarto (image scope)", {
   )
   feedback <- as_feedback_text(raw)
 
-  exp_signal(new_expectation(
-    type = "success",
-    message = ifelse(nzchar(feedback), feedback, "[empty feedback]"),
-    markus_overall_comments = feedback
-  ))
-
-  try({
-    add_image_annotations(basename(submission_qmd_path), feedback)
-  }, silent = TRUE)
+  if (nchar(feedback) == 0) {
+    exp_signal(new_expectation(
+      type = "failure",
+      message = "LLM returned empty feedback for image scope.",
+      markus_overall_comment = "[empty feedback]"
+    ))
+    fail("Empty image-scope feedback")
+  } else {
+    exp_signal(new_expectation(
+      type = "success",
+      message = "Posted LLM overall feedback for image scope.",
+      markus_overall_comment = feedback
+    ))
+    anns <- find_annotations_object(feedback)
+    if (length(anns)) {
+      try(add_image_annotations(basename(submission_qmd_path), feedback), silent = TRUE)
+    }
+    succeed()
+  }
 })
