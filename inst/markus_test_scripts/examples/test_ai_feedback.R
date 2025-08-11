@@ -5,6 +5,7 @@ library(aifeedbackr)
 library(knitr)
 library(R6)
 library(jsonlite)
+library(httr)
 
 resolve_resource_path <- function(rel) {
   p2 <- rel
