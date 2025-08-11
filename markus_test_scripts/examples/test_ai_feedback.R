@@ -10,7 +10,6 @@ library(R6)
 
 main <- get("main", envir = asNamespace("aifeedbackr"))
 
-# Inject a mock model to avoid external API calls during tests
 {
   ns <- asNamespace("aifeedbackr")
   MockModel <- R6::R6Class("MockModel",
@@ -26,9 +25,19 @@ main <- get("main", envir = asNamespace("aifeedbackr"))
   lockBinding("model_mapping", ns)
 }
 
-# Resolve prompt file paths relative to installed package
-code_prompt_path <- system.file("markus_test_scripts/examples/prompts/code_prompt.md", package = "aifeedbackr")
-image_prompt_path <- system.file("markus_test_scripts/examples/prompts/image_prompt.md", package = "aifeedbackr")
+# Helper to resolve prompt path
+resolve_prompt_path <- function(rel_path) {
+  pkg_path <- system.file(rel_path, package = "aifeedbackr")
+  if (nzchar(pkg_path)) {
+    return(pkg_path)
+  } else {
+    return(file.path("markus_test_scripts/examples/prompts", basename(rel_path)))
+  }
+}
+
+# Resolve prompt file paths
+code_prompt_path <- resolve_prompt_path("markus_test_scripts/examples/prompts/code_prompt.md")
+image_prompt_path <- resolve_prompt_path("markus_test_scripts/examples/prompts/image_prompt.md")
 
 test_that("AI feedback using prompt file", {
   feedback <- main(
@@ -109,4 +118,3 @@ test_that("AI feedback for Quarto document using prompt file", {
   expect_true(is.character(feedback))
   expect_true(nchar(feedback) > 0)
 })
- 
