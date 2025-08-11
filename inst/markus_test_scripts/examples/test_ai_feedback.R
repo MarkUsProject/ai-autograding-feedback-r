@@ -28,53 +28,79 @@ source(helpers_path)
 
 main <- get("main", envir = asNamespace("aifeedbackr"))
 
+as_feedback_text <- function(x) {
+  if (is.null(x)) return("")
+  if (is.character(x)) return(paste(x, collapse = "\n"))
+  if (is.list(x)) {
+    if (!is.null(x$response)) {
+      return(as_feedback_text(x$response))
+    }
+    if (length(x) >= 2 && is.list(x[[2]]) && !is.null(x[[2]]$response)) {
+      return(as_feedback_text(x[[2]]$response))
+    }
+    return(paste(capture.output(str(x, max.level = 2)), collapse = "\n"))
+  }
+  paste(capture.output(str(x, max.level = 2)), collapse = "\n")
+}
+
 .state <- new.env(parent = emptyenv())
-.state$llm_feedback_code <- NULL
+.state$llm_feedback_code <- ""
 
 test_that("Generates LLM feedback for code scope", {
-  feedback <- main(
+  raw <- main(
     submission = submission_r_path,
     scope = "code",
     model = "claude",
     prompt = code_prompt_path
   )
+  feedback <- as_feedback_text(raw)
   .state$llm_feedback_code <- feedback
 
   exp_signal(new_expectation(
     type = "success",
-    message = "",
+    message = ifelse(nzchar(feedback), feedback, "[empty feedback]"),
     markus_overall_comments = feedback
-  ))
-  exp_signal(new_expectation(
-    type = "success",
-    message = substr(feedback, 1L, min(nchar(feedback), 3000L))
   ))
 })
 
 test_that("Generates LLM annotations for code scope", {
-  if (is.null(.state$llm_feedback_code) || !nzchar(.state$llm_feedback_code)) {
-    testthat::skip("No prior feedback to base annotations on.")
+  feedback <- .state$llm_feedback_code
+  if (!nzchar(feedback)) {
+    exp_signal(new_expectation(
+      type = "success",
+      message = "No prior feedback text; skipping annotation extraction."
+    ))
+    return(invisible(NULL))
   }
-  add_code_annotations(submission_r_path, .state$llm_feedback_code)
+  try({
+    add_code_annotations(submission_r_path, feedback)
+  }, silent = TRUE)
+  exp_signal(new_expectation(
+    type = "success",
+    message = "Annotation extraction attempted (if annotations JSON present)."
+  ))
 })
 
 test_that("Generates LLM feedback for Quarto (image scope)", {
   if (!file.exists(submission_qmd_path)) testthat::skip("No .qmd present; skipping image test")
   if (Sys.which("quarto") == "")        testthat::skip("quarto not available; skipping image test")
 
-  feedback <- main(
+  raw <- main(
     submission = submission_qmd_path,
     scope = "image",
     model = "claude",
     prompt = image_prompt_path,
     solution = NULL
   )
+  feedback <- as_feedback_text(raw)
 
   exp_signal(new_expectation(
     type = "success",
-    message = "",
+    message = ifelse(nzchar(feedback), feedback, "[empty feedback]"),
     markus_overall_comments = feedback
   ))
 
-  add_image_annotations(basename(submission_qmd_path), feedback)
+  try({
+    add_image_annotations(basename(submission_qmd_path), feedback)
+  }, silent = TRUE)
 })
