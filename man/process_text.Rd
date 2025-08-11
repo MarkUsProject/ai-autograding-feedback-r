@@ -4,7 +4,7 @@
 \alias{process_text}
 \title{Process text-based submissions and generate model feedback.}
 \usage{
-process_text(args, prompt, system_instructions, marking_instructions = NULL)
+process_text(args, prompt, system_instructions)
 }
 \arguments{
 \item{args}{A list of arguments}
@@ -12,8 +12,6 @@ process_text(args, prompt, system_instructions, marking_instructions = NULL)
 \item{prompt}{A string containing the prompt template.}
 
 \item{system_instructions}{A string of system-level instructions for the model.}
-
-\item{marking_instructions}{Optional marking instructions.}
 }
 \value{
 A list of two elements: request and response from the model.

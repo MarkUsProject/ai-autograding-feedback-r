@@ -4,7 +4,7 @@
 \alias{process_code}
 \title{Process code-based assignment files and generate model feedback.}
 \usage{
-process_code(args, prompt, system_instructions, marking_instructions = NULL)
+process_code(args, prompt, system_instructions)
 }
 \arguments{
 \item{args}{A list of input arguments including submission path, model name,
@@ -13,8 +13,6 @@ scope, solution path, optional question, and test output file.}
 \item{prompt}{The user-defined prompt string, possibly with placeholders.}
 
 \item{system_instructions}{A string passed to the model with system-level instructions.}
-
-\item{marking_instructions}{Optional marking instructions}
 }
 \value{
 A list of two elements: the full request string and the model's response.
