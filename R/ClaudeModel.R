@@ -1,16 +1,14 @@
 library(httr)
 library(jsonlite)
-library(dotenv)
 library(R6)
 library(base64enc)
-
-load_dot_env()
 
 ClaudeModel <- R6Class("ClaudeModel",
   public = list(
     api_key = NULL,
     model_name = "claude-3-7-sonnet-20250219",
     initialize = function() {
+      .load_env_safely()
       self$api_key <- Sys.getenv("CLAUDE_API_KEY")
       if (self$api_key == "") {
         stop("CLAUDE_API_KEY not set in environment variables.")
