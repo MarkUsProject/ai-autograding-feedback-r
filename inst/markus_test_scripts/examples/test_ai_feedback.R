@@ -7,6 +7,12 @@ library(R6)
 library(jsonlite)
 library(httr)
 
+if (file.exists(".env")) {
+  try({
+    if (requireNamespace("dotenv", quietly = TRUE)) dotenv::load_dot_env(".env")
+  }, silent = TRUE)
+}
+
 resolve_resource_path <- function(rel) {
   p2 <- rel
   if (file.exists(p2)) return(normalizePath(p2, mustWork = TRUE))
@@ -18,7 +24,7 @@ resolve_resource_path <- function(rel) {
 }
 
 code_prompt_path    <- normalizePath("prompt.md", mustWork = TRUE)
-
+image_prompt_path   <- resolve_resource_path("markus_test_scripts/examples/prompts/image_prompt.md")
 submission_r_path   <- resolve_resource_path("markus_test_scripts/examples/submission.R")
 submission_qmd_path <- resolve_resource_path("markus_test_scripts/examples/submission.qmd")
 helpers_path        <- resolve_resource_path("markus_test_scripts/examples/llm_helpers.R")
@@ -32,6 +38,9 @@ as_feedback_text <- function(x) {
   if (is.null(x)) return("")
   if (is.character(x)) return(paste(x, collapse = "\n"))
   if (is.list(x)) {
+    if (length(x) > 0 && all(vapply(x, is.character, logical(1)))) {
+      return(paste(unlist(x, use.names = FALSE), collapse = "\n"))
+    }
     if (!is.null(x$response)) return(as_feedback_text(x$response))
     if (length(x) >= 2 && is.list(x[[2]]) && !is.null(x[[2]]$response)) {
       return(as_feedback_text(x[[2]]$response))
@@ -39,6 +48,21 @@ as_feedback_text <- function(x) {
     return(paste(capture.output(str(x, max.level = 2)), collapse = "\n"))
   }
   paste(capture.output(str(x, max.level = 2)), collapse = "\n")
+}
+
+emit_annotation <- function(filename, content, line_start, line_end, column_start = 1, column_end = 1) {
+  exp_signal(new_expectation(
+    type = "success",
+    message = "",
+    markus_annotation = list(
+      filename = filename,
+      content = content,
+      line_start = as.integer(line_start),
+      line_end = as.integer(line_end),
+      column_start = as.integer(column_start),
+      column_end = as.integer(column_end)
+    )
+  ))
 }
 
 .state <- new.env(parent = emptyenv())
@@ -54,11 +78,6 @@ test_that("Generates LLM feedback for code scope", {
   feedback <- as_feedback_text(raw)
   .state$llm_feedback_code <- feedback
 
-  cat("\n===== LLM FEEDBACK (FULL TEXT) =====\n")
-  cat(feedback, "\n")
-  cat("===== END LLM FEEDBACK =====\n\n")
-  flush.console()
-
   if (nchar(feedback) == 0) {
     exp_signal(new_expectation(
       type = "failure",
@@ -69,7 +88,7 @@ test_that("Generates LLM feedback for code scope", {
   } else {
     exp_signal(new_expectation(
       type = "success",
-      message = paste0("LLM overall feedback (full text):\n", feedback),
+      message = "",
       markus_overall_comments = feedback
     ))
     succeed()
@@ -81,23 +100,35 @@ test_that("Emits code annotations when present", {
   if (nchar(feedback) == 0) {
     exp_signal(new_expectation(
       type = "failure",
-      message = "No prior feedback to extract annotations from.",
-      markus_overall_comments = "No feedback captured in previous step."
+      message = "No prior feedback to extract annotations from."
     ))
     fail("No feedback for annotation extraction")
   } else {
     anns <- find_annotations_object(feedback)
-    if (!length(anns)) {
-      exp_signal(new_expectation(
-        type = "success",
-        message = "No annotations found in LLM output; skipping emission."
-      ))
-      succeed()
-    } else {
-      try(add_code_annotations(submission_r_path, feedback), silent = TRUE)
+    if (length(anns)) {
+      for (i in seq_len(NROW(anns))) {
+        a <- anns[[i]]
+        fn <- if (!is.null(a$filename)) a$filename else "submission.R"
+        cs <- if (!is.null(a$column_start)) a$column_start else 1
+        ce <- if (!is.null(a$column_end))   a$column_end   else 1
+        emit_annotation(
+          filename    = fn,
+          content     = a$content,
+          line_start  = a$line_start,
+          line_end    = a$line_end,
+          column_start = cs,
+          column_end   = ce
+        )
+      }
       exp_signal(new_expectation(
         type = "success",
         message = sprintf("Emitted %d code annotations.", length(anns))
+      ))
+      succeed()
+    } else {
+      exp_signal(new_expectation(
+        type = "success",
+        message = "No annotations found in LLM output; skipping emission."
       ))
       succeed()
     }
