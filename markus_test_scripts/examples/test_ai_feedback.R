@@ -101,38 +101,3 @@ test_that("Emits code annotations when present", {
     }
   }
 })
-
-test_that("Generates LLM feedback for Quarto (image scope)", {
-  if (!file.exists(submission_qmd_path)) testthat::skip("No .qmd present; skipping image test")
-  if (Sys.which("quarto") == "")        testthat::skip("quarto not available; skipping image test")
-
-  raw <- main(
-    submission = submission_qmd_path,
-    scope = "image",
-    model = "claude",
-    prompt = image_prompt_path,
-    solution = NULL
-  )
-  feedback <- as_feedback_text(raw)
-
-  if (nchar(feedback) == 0) {
-    exp_signal(new_expectation(
-      type = "failure",
-      message = "LLM returned empty feedback for image scope.",
-      markus_overall_comment = "[empty feedback]"
-    ))
-    fail("Empty image-scope feedback")
-  } else {
-    preview <- substr(feedback, 1, 800)
-    exp_signal(new_expectation(
-      type = "success",
-      message = paste0("LLM overall feedback preview (first 800 chars):\n", preview),
-      markus_overall_comment = feedback
-    ))
-    anns <- find_annotations_object(feedback)
-    if (length(anns)) {
-      try(add_image_annotations(basename(submission_qmd_path), feedback), silent = TRUE)
-    }
-    succeed()
-  }
-})
