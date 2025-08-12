@@ -17,8 +17,8 @@ resolve_resource_path <- function(rel) {
   stop("Resource not found: ", rel)
 }
 
-code_prompt_path    <- resolve_resource_path("markus_test_scripts/examples/prompts/code_prompt.md")
-image_prompt_path   <- resolve_resource_path("markus_test_scripts/examples/prompts/image_prompt.md")
+code_prompt_path    <- normalizePath("prompt.md", mustWork = TRUE)
+
 submission_r_path   <- resolve_resource_path("markus_test_scripts/examples/submission.R")
 submission_qmd_path <- resolve_resource_path("markus_test_scripts/examples/submission.qmd")
 helpers_path        <- resolve_resource_path("markus_test_scripts/examples/llm_helpers.R")
