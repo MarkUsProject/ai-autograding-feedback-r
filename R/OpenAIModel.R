@@ -1,7 +1,10 @@
 library(httr)
 library(jsonlite)
+library(dotenv)
 library(R6)
 library(base64enc)
+
+load_dot_env()  # Load .env variables like OPENAI_API_KEY
 
 OpenAIModel <- R6::R6Class("OpenAIModel",
   public = list(
@@ -9,7 +12,6 @@ OpenAIModel <- R6::R6Class("OpenAIModel",
 
     initialize = function() {
       #' Initialize the OpenAIModel instance by loading the API key.
-      .load_env_safely()
       self$api_key <- Sys.getenv("OPENAI_API_KEY")
       if (self$api_key == "") {
         stop("OPENAI_API_KEY is not set in environment.")
