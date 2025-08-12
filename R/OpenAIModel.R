@@ -3,7 +3,7 @@ library(jsonlite)
 library(R6)
 library(base64enc)
 
-OpenAIModel <- R6Class("OpenAIModel",
+OpenAIModel <- R6::R6Class("OpenAIModel",
   public = list(
     api_key = NULL,
 
@@ -26,9 +26,9 @@ OpenAIModel <- R6Class("OpenAIModel",
       response_text <- tryCatch({
         url <- "https://api.openai.com/v1/chat/completions"
 
-        headers <- add_headers(
-          'Authorization' = paste('Bearer', self$api_key),
-          'Content-Type' = 'application/json'
+        headers <- httr::add_headers(
+          Authorization = paste("Bearer", self$api_key),
+          `Content-Type` = "application/json"
         )
 
         image_blocks <- list()
@@ -39,7 +39,7 @@ OpenAIModel <- R6Class("OpenAIModel",
             submission_img <- submission_images[i]
             image_blocks <- append(image_blocks, list(list(
               type = "image_url",
-              image_url = list(url = paste0("data:image/png;base64,", base64encode(submission_img)))
+              image_url = list(url = paste0("data:image/png;base64,", base64enc::base64encode(submission_img)))
             )))
           }
         }
@@ -48,7 +48,7 @@ OpenAIModel <- R6Class("OpenAIModel",
         if (!is.null(solution_image)) {
           image_blocks <- append(image_blocks, list(list(
             type = "image_url",
-            image_url = list(url = paste0("data:image/png;base64,", base64encode(solution_image)))
+            image_url = list(url = paste0("data:image/png;base64,", base64enc::base64encode(solution_image)))
           )))
         }
 
@@ -71,18 +71,18 @@ OpenAIModel <- R6Class("OpenAIModel",
           temperature = 0.5
         ), auto_unbox = TRUE)
 
-        res <- POST(url, body = body, encode = "raw", config = headers)
+        res <- httr::POST(url, body = body, encode = "raw", config = headers)
 
         if (res$status_code != 200) {
-          stop("OpenAI API call failed: ", content(res, "text"))
+          stop("OpenAI API call failed: ", httr::content(res, "text"))
         }
 
-        parsed <- content(res, as = "parsed", type = "application/json")
+        parsed <- httr::content(res, as = "parsed", type = "application/json")
         parsed$choices[[1]]$message$content
 
       }, error = function(e) {
         message("Error in OpenAI API call: ", conditionMessage(e))
-        return(paste("ERROR: Failed to call OpenAI API —", conditionMessage(e)))
+        paste("ERROR: Failed to call OpenAI API —", conditionMessage(e))
       })
       
       return(list(prompt = prompt, response = response_text))
