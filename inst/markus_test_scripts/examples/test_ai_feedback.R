@@ -32,9 +32,7 @@ as_feedback_text <- function(x) {
   if (is.null(x)) return("")
   if (is.character(x)) return(paste(x, collapse = "\n"))
   if (is.list(x)) {
-    if (!is.null(x$response)) {
-      return(as_feedback_text(x$response))
-    }
+    if (!is.null(x$response)) return(as_feedback_text(x$response))
     if (length(x) >= 2 && is.list(x[[2]]) && !is.null(x[[2]]$response)) {
       return(as_feedback_text(x[[2]]$response))
     }
@@ -56,18 +54,23 @@ test_that("Generates LLM feedback for code scope", {
   feedback <- as_feedback_text(raw)
   .state$llm_feedback_code <- feedback
 
+  cat("\n===== LLM FEEDBACK (FULL TEXT) =====\n")
+  cat(feedback, "\n")
+  cat("===== END LLM FEEDBACK =====\n\n")
+  flush.console()
+
   if (nchar(feedback) == 0) {
     exp_signal(new_expectation(
       type = "failure",
       message = "LLM returned empty feedback for code scope.",
-      markus_overall_comment = "[empty feedback]"
+      markus_overall_comments = "[empty feedback]"
     ))
     fail("Empty feedback")
   } else {
     exp_signal(new_expectation(
       type = "success",
       message = paste0("LLM overall feedback (full text):\n", feedback),
-      markus_overall_comment = feedback
+      markus_overall_comments = feedback
     ))
     succeed()
   }
@@ -79,7 +82,7 @@ test_that("Emits code annotations when present", {
     exp_signal(new_expectation(
       type = "failure",
       message = "No prior feedback to extract annotations from.",
-      markus_overall_comment = "No feedback captured in previous step."
+      markus_overall_comments = "No feedback captured in previous step."
     ))
     fail("No feedback for annotation extraction")
   } else {
