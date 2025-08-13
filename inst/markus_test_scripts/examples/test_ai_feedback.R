@@ -27,36 +27,49 @@ code_prompt_path    <- normalizePath("prompt.md", mustWork = TRUE)
 submission_r_path   <- resolve_resource_path("markus_test_scripts/examples/submission.R")
 helpers_path        <- resolve_resource_path("markus_test_scripts/examples/llm_helpers.R")
 
+# Load submission file and helpers
 suppressWarnings(try(source(submission_r_path), silent = TRUE))
 source(helpers_path)
 
+# Define %||% if not already defined
+if (!exists("%||%")) {
+  `%||%` <- function(a, b) if (is.null(a)) b else a
+}
+
+# Get the main function from aifeedbackr package
 main <- get("main", envir = asNamespace("aifeedbackr"))
 
 as_feedback_text <- function(x) {
   if (is.null(x)) return("")
   if (is.character(x)) return(paste(x, collapse = "\n"))
   if (is.list(x)) {
+    # Handle aifeedbackr main() return format
+    if (!is.null(x$response)) return(x$response)
+    if (!is.null(x$output)) return(x$output)
+    if (!is.null(x$raw) && is.list(x$raw) && !is.null(x$raw$response)) {
+      return(x$raw$response)
+    }
+    
+    # Fallback for other list formats
     if (length(x) > 0 && all(vapply(x, is.character, logical(1)))) {
       return(paste(unlist(x, use.names = FALSE), collapse = "\n"))
     }
-    if (!is.null(x$response)) return(as_feedback_text(x$response))
     if (length(x) >= 2 && is.list(x[[2]]) && !is.null(x[[2]]$response)) {
-      return(as_feedback_text(x[[2]]$response))
+      return(x[[2]]$response)
     }
     return(paste(capture.output(str(x, max.level = 2)), collapse = "\n"))
   }
-  paste(capture.output(str(x, max.level = 2)), collapse = "\n"))
+  paste(capture.output(str(x, max.level = 2)), collapse = "\n")
 }
 
-# Global variable to store LLM feedback
 llm_feedback <- ""
 
 test_that("Generates LLM feedback for code scope", {
   raw <- main(
-    submission = submission_r_path,
+    prompt = code_prompt_path,
     scope = "code",
-    model = "claude",
-    prompt = code_prompt_path
+    submission = submission_r_path,
+    model = "claude"
   )
   
   feedback <- as_feedback_text(raw)
@@ -72,10 +85,9 @@ test_that("Generates LLM feedback for code scope", {
     exp_signal(expectation)
     fail("Empty feedback")
   } else {
-    # Create success expectation and set overall_comments attribute
     expectation <- new_expectation(
       type = "success",
-      message = feedback  # This will display in Test Results
+      message = feedback
     )
     attr(expectation, "markus_overall_comments") <- feedback
     exp_signal(expectation)
