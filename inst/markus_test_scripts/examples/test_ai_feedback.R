@@ -24,9 +24,7 @@ resolve_resource_path <- function(rel) {
 }
 
 code_prompt_path    <- normalizePath("prompt.md", mustWork = TRUE)
-image_prompt_path   <- resolve_resource_path("markus_test_scripts/examples/prompts/image_prompt.md")
 submission_r_path   <- resolve_resource_path("markus_test_scripts/examples/submission.R")
-submission_qmd_path <- resolve_resource_path("markus_test_scripts/examples/submission.qmd")
 helpers_path        <- resolve_resource_path("markus_test_scripts/examples/llm_helpers.R")
 
 suppressWarnings(try(source(submission_r_path), silent = TRUE))
@@ -47,26 +45,11 @@ as_feedback_text <- function(x) {
     }
     return(paste(capture.output(str(x, max.level = 2)), collapse = "\n"))
   }
-  paste(capture.output(str(x, max.level = 2)), collapse = "\n")
+  paste(capture.output(str(x, max.level = 2)), collapse = "\n"))
 }
 
-emit_annotation <- function(filename, content, line_start, line_end, column_start = 1, column_end = 1) {
-  exp_signal(new_expectation(
-    type = "success",
-    message = "",
-    markus_annotation = list(
-      filename = filename,
-      content = content,
-      line_start = as.integer(line_start),
-      line_end = as.integer(line_end),
-      column_start = as.integer(column_start),
-      column_end = as.integer(column_end)
-    )
-  ))
-}
-
-.state <- new.env(parent = emptyenv())
-.state$llm_feedback_code <- ""
+# Global variable to store LLM feedback
+llm_feedback <- ""
 
 test_that("Generates LLM feedback for code scope", {
   raw <- main(
@@ -75,61 +58,94 @@ test_that("Generates LLM feedback for code scope", {
     model = "claude",
     prompt = code_prompt_path
   )
+  
   feedback <- as_feedback_text(raw)
-  .state$llm_feedback_code <- feedback
-
+  llm_feedback <<- feedback
+  
   if (nchar(feedback) == 0) {
-    exp_signal(new_expectation(
+    # For empty feedback, create a failure expectation but still set overall_comments
+    expectation <- new_expectation(
       type = "failure",
-      message = "LLM returned empty feedback for code scope.",
-      markus_overall_comments = "[empty feedback]"
-    ))
+      message = "LLM returned empty feedback for code scope."
+    )
+    attr(expectation, "markus_overall_comments") <- "[empty feedback]"
+    exp_signal(expectation)
     fail("Empty feedback")
   } else {
-    exp_signal(new_expectation(
+    # Create success expectation and set overall_comments attribute
+    expectation <- new_expectation(
       type = "success",
-      message = "",
-      markus_overall_comments = feedback
-    ))
+      message = feedback  # This will display in Test Results
+    )
+    attr(expectation, "markus_overall_comments") <- feedback
+    exp_signal(expectation)
     succeed()
   }
 })
 
 test_that("Emits code annotations when present", {
-  feedback <- .state$llm_feedback_code
+  feedback <- llm_feedback
+  
   if (nchar(feedback) == 0) {
-    exp_signal(new_expectation(
+    expectation <- new_expectation(
       type = "failure",
       message = "No prior feedback to extract annotations from."
-    ))
+    )
+    exp_signal(expectation)
     fail("No feedback for annotation extraction")
   } else {
+    # Extract annotations
     anns <- find_annotations_object(feedback)
-    if (length(anns)) {
-      for (i in seq_len(NROW(anns))) {
+    
+    if (length(anns) > 0) {
+      # Create expectation for each annotation and set markus_annotation attribute
+      for (i in seq_along(anns)) {
         a <- anns[[i]]
-        fn <- if (!is.null(a$filename)) a$filename else "submission.R"
-        cs <- if (!is.null(a$column_start)) a$column_start else 1
-        ce <- if (!is.null(a$column_end))   a$column_end   else 1
-        emit_annotation(
-          filename    = fn,
-          content     = a$content,
-          line_start  = a$line_start,
-          line_end    = a$line_end,
-          column_start = cs,
-          column_end   = ce
+        
+        # Read file to compute columns
+        file_lines <- try(readLines(submission_r_path, warn = FALSE), silent = TRUE)
+        if (inherits(file_lines, "try-error")) file_lines <- character()
+        
+        fn <- a$filename %||% basename(submission_r_path)
+        txt <- a$content %||% a$description %||% ""
+        ls <- as.integer(a$line_start %||% 1L)
+        le <- as.integer(a$line_end %||% ls)
+        
+        # Skip empty content
+        if (!nzchar(txt)) next
+        
+        # Compute columns
+        cols <- compute_columns(file_lines, ls, le)
+        
+        # Create expectation with annotation attribute
+        expectation <- new_expectation(
+          type = "success",
+          message = ""
         )
+        attr(expectation, "markus_annotation") <- list(
+          filename = fn,
+          content = txt,
+          line_start = cols$line_start,
+          line_end = cols$line_end,
+          column_start = cols$column_start,
+          column_end = cols$column_end
+        )
+        exp_signal(expectation)
       }
-      exp_signal(new_expectation(
+      
+      # Send final success message
+      expectation <- new_expectation(
         type = "success",
         message = sprintf("Emitted %d code annotations.", length(anns))
-      ))
+      )
+      exp_signal(expectation)
       succeed()
     } else {
-      exp_signal(new_expectation(
+      expectation <- new_expectation(
         type = "success",
         message = "No annotations found in LLM output; skipping emission."
-      ))
+      )
+      exp_signal(expectation)
       succeed()
     }
   }
