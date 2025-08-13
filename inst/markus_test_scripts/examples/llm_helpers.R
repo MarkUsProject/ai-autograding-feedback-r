@@ -1,94 +1,21 @@
 # llm_helpers.R
 
-.extract_codefence_json <- function(txt) {
-  if (is.null(txt) || !nzchar(txt)) return(character())
-  m <- gregexpr("```(?:json)?\\s*([\\s\\S]*?)\\s*```", txt, perl = TRUE)
-  hits <- regmatches(txt, m)[[1]]
-  if (!length(hits)) return(character())
-  sub("^```(?:json)?\\s*|\\s*```$", "", hits, perl = TRUE)
+library(httr)
+library(jsonlite)
+
+if (file.exists(".env")) {
+  try({
+    if (requireNamespace("dotenv", quietly = TRUE)) dotenv::load_dot_env(".env")
+  }, silent = TRUE)
 }
 
-.extract_brace_json <- function(txt) {
-  if (is.null(txt) || !nzchar(txt)) return(character())
-  m <- gregexpr("\\{(?:[^{}]|\\{[^{}]*\\})*\\}", txt, perl = TRUE)
-  regmatches(txt, m)[[1]]
-}
+ANNOTATION_PROMPT <- "These are the student mistakes you previously identified in the last message. For each of the mistakes you identified, return a JSON object containing an array of annotations, referencing the student's submission file for line and column #s. Each annotation should include: filename: The name of the student's file. content: A short description of the mistake. line_start and line_end: The line number(s) where the mistake occurs. Ensure the JSON is valid and properly formatted. Here is a sample format of the json array to return: { \"annotations\": [{\"filename\": \"submission.R\", \"content\": \"Variable 'x' is unused.\", \"line_start\": 5, \"line_end\": 5}]}. ONLY return the json object and nothing else. Make sure the line #s don't exceed the number of lines in the file. You can use markdown syntax in the annotation's content, especially when denoting code."
 
-.parse_json_list <- function(chunks) {
-  out <- list()
-  for (s in chunks) {
-    s <- trimws(s)
-    j <- try(jsonlite::fromJSON(s, simplifyVector = FALSE), silent = TRUE)
-    if (!inherits(j, "try-error") && is.list(j)) {
-      out[[length(out) + 1]] <- j
-    }
-  }
-  out
-}
-
-extract_json <- function(response) {
-  cands <- c(.extract_codefence_json(response), .extract_brace_json(response))
-  objs <- .parse_json_list(cands)
-  return(objs)
-}
-
-find_annotations_object <- function(txt) {
-  objs <- extract_json(txt)
-  
-  for (o in objs) {
-    if (!is.null(o$annotations) && is.list(o$annotations) && length(o$annotations) > 0) {
-      return(o$annotations)
-    }
-  }
-  
-  for (o in objs) {
-    if (is.list(o) && length(o) > 0 && is.list(o[[1]]) &&
-        all(c("filename","content","line_start","line_end") %in% names(o[[1]]))) {
-      return(o)
-    }
-  }
-  
-  for (o in objs) {
-    if (is.list(o) && all(c("filename","content","line_start","line_end") %in% names(o))) {
-      return(list(o))
-    }
-  }
-  
-  return(list())
-}
-
-`%||%` <- function(a, b) if (is.null(a)) b else a
-
-compute_columns <- function(file_lines, line_start, line_end) {
-  n <- length(file_lines)
-  ls <- max(1L, min(as.integer(line_start), n))
-  le <- max(ls, min(as.integer(line_end), n))
-  starts <- integer(); ends <- integer()
-  
-  for (i in ls:le) {
-    if (i > length(file_lines)) break
-    ln <- file_lines[[i]]
-    if (!nzchar(trimws(ln))) { 
-      starts <- c(starts, 1L); ends <- c(ends, 1L) 
-    } else {
-      start_col <- nchar(ln, type = "bytes") - nchar(sub("^\\s*", "", ln), type = "bytes")
-      end_col <- nchar(sub("\\s*$", "", ln), type = "bytes")
-      starts <- c(starts, start_col + 1L); ends <- c(ends, end_col)
-    }
-  }
-  
-  list(
-    line_start = ls, 
-    line_end = le,
-    column_start = ifelse(length(starts), min(starts), 1L),
-    column_end = ifelse(length(ends), max(ends), 1L)
-  )
-}
-
-add_annotation_columns <- function(annotations, submission_path) {
+add_annotation_columns <- function(annotations, submission_file_path) {
   tryCatch({
-    file_lines <- readLines(submission_path, warn = FALSE)
+    file_lines <- readLines(submission_file_path, warn = FALSE)
   }, error = function(e) {
+    cat("Error reading submission file:", e$message, "\n")
     return(list())
   })
   
@@ -100,6 +27,7 @@ add_annotation_columns <- function(annotations, submission_path) {
     line_end <- annotation$line_end
     
     if (is.null(file_lines) || line_start > length(file_lines) || line_end > length(file_lines)) {
+      cat("Skipping invalid line numbers for", filename, ":", line_start, "-", line_end, "\n")
       next
     }
     
@@ -110,10 +38,10 @@ add_annotation_columns <- function(annotations, submission_path) {
       if (i > length(file_lines)) next
       
       line <- file_lines[i]
-      stripped_line <- trimws(line, "right")
+      stripped_line <- sub("\n$", "", line)
       
-      if (nzchar(stripped_line)) {
-        start_col <- nchar(line) - nchar(trimws(line, "left"))
+      if (nzchar(trimws(stripped_line))) {
+        start_col <- nchar(line) - nchar(sub("^\\s*", "", line))
         end_col <- nchar(stripped_line)
       } else {
         start_col <- 0
@@ -140,6 +68,95 @@ add_annotation_columns <- function(annotations, submission_path) {
   return(annotations_with_columns)
 }
 
+run_llm <- function(
+  submission,
+  model,
+  scope,
+  output,
+  prompt_custom = NULL,
+  question = NULL,
+  prompt_text = NULL,
+  prompt = NULL
+) {
+  # Get Claude API key
+  api_key <- Sys.getenv("CLAUDE_API_KEY")
+  if (api_key == "") {
+    stop("CLAUDE_API_KEY not set in environment variables")
+  }
+  
+  # Build prompt content
+  prompt_content <- ""
+  if (!is.null(prompt)) {
+    prompt_content <- paste(readLines(prompt), collapse = "\n")
+  }
+  if (!is.null(prompt_text)) {
+    prompt_content <- paste0(prompt_content, prompt_text)
+  }
+  if (prompt_content == "") {
+    stop("No prompt provided. Please specify a prompt file or text.")
+  }
+  
+  # Read submission file
+  submission_content <- paste(readLines(submission), collapse = "\n")
+  
+  # Combine prompt with submission
+  full_prompt <- paste0(
+    prompt_content, "\n\n",
+    "File: ", basename(submission), "\n",
+    submission_content
+  )
+  
+  # Prepare API request
+  body <- list(
+    model = "claude-3-5-sonnet-20241022",
+    max_tokens = 2000,
+    temperature = 0.3,
+    system = "You are an instructor evaluating student code.",
+    messages = list(
+      list(
+        role = "user",
+        content = full_prompt
+      )
+    )
+  )
+  
+  # Make API call
+  response <- POST(
+    url = "https://api.anthropic.com/v1/messages",
+    body = toJSON(body, auto_unbox = TRUE),
+    add_headers(
+      `x-api-key` = api_key,
+      `content-type` = "application/json",
+      `anthropic-version` = "2023-06-01"
+    )
+  )
+  
+  if (status_code(response) != 200) {
+    error_content <- content(response, "text")
+    stop(paste("Claude API call failed [HTTP", status_code(response), "]:", error_content))
+  }
+  
+  # Parse response
+  parsed <- content(response, "parsed")
+  response_text <- parsed$content[[1]]$text
+  
+  return(response_text)
+}
+
+extract_json <- function(response) {
+  matches <- regmatches(response, gregexpr("\\{(?:[^{}]|(?:\\{(?:[^{}]|(?:\\{[^{}]*\\}))*\\}))*\\}", response, perl = TRUE))[[1]]
+  
+  json_objects <- list()
+  for (match in matches) {
+    parsed <- try(fromJSON(match, simplifyVector = FALSE), silent = TRUE)
+    if (!inherits(parsed, "try-error")) {
+      json_objects[[length(json_objects) + 1]] <- parsed
+    }
+  }
+  
+  return(json_objects)
+}
+
 MINIMUM_ANNOTATION_WIDTH <- 8
 
 convert_coordinates <- function(box) {
@@ -148,89 +165,33 @@ convert_coordinates <- function(box) {
   
   return(c(
     box[1] - x_extension,
-    box[2] - y_extension, 
+    box[2] - y_extension,
     box[3] + x_extension,
     box[4] + y_extension
   ))
 }
 
-add_code_annotations <- function(submission_path, llm_output, max_annotations = 100) {
-  file_lines <- try(readLines(submission_path, warn = FALSE), silent = TRUE)
-  if (inherits(file_lines, "try-error")) file_lines <- character()
-
-  anns <- find_annotations_object(llm_output)
-  if (!length(anns)) return(invisible(NULL))
-
-  key <- function(a) paste(
-    a$filename %||% basename(submission_path),
-    a$content %||% "",
-    a$line_start %||% 1L,
-    a$line_end %||% (a$line_start %||% 1L),
-    sep = "|"
-  )
-  seen <- new.env(parent = emptyenv())
-
-  count <- 0L
-  for (a in anns) {
-    if (count >= max_annotations) break
-
-    fn <- a$filename %||% basename(submission_path)
-    txt <- a$content %||% a$description %||% ""
-    ls <- as.integer(a$line_start %||% 1L)
-    le <- as.integer(a$line_end %||% ls)
-
-    if (!nzchar(txt)) next
-    
-    k <- key(a)
-    if (isTRUE(seen[[k]])) next
-    seen[[k]] <- TRUE
-
-    cols <- compute_columns(file_lines, ls, le)
-
-    exp_signal(new_expectation(
-      type = "success",
-      message = "",
-      markus_annotation = list(
-        filename = fn,
-        content = txt,
-        line_start = cols$line_start,
-        line_end = cols$line_end,
-        column_start = cols$column_start,
-        column_end = cols$column_end
-      )
-    ))
-    count <- count + 1L
-  }
-  
-  invisible(NULL)
-}
-
-add_image_annotations <- function(target_filename, llm_output, max_annotations = 50) {
-  annotations <- extract_json(llm_output)
-  
-  count <- 0L
+add_image_annotations <- function(request, llm_feedback, file_name) {
+  annotations <- extract_json(llm_feedback)
   for (annotation in annotations) {
-    if (count >= max_annotations) break
-    
     if (!is.null(annotation$location) && !is.null(annotation$description)) {
       coords <- convert_coordinates(annotation$location)
       
-      exp_signal(new_expectation(
+      # R equivalent of pytest.mark.markus_annotation
+      expectation <- new_expectation(
         type = "success",
-        message = "",
-        markus_annotation = list(
-          type = "ImageAnnotation",
-          filename = basename(target_filename),
-          content = annotation$description,
-          x1 = coords[1],
-          y1 = coords[2], 
-          x2 = coords[3],
-          y2 = coords[4]
-        )
-      ))
-      count <- count + 1L
+        message = ""
+      )
+      attr(expectation, "markus_annotation") <- list(
+        type = "ImageAnnotation",
+        filename = basename(file_name),
+        content = annotation$description,
+        x1 = coords[1],
+        y1 = coords[2],
+        x2 = coords[3],
+        y2 = coords[4]
+      )
+      exp_signal(expectation)
     }
   }
-  
-  invisible(NULL)
 }
