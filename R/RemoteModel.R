@@ -9,7 +9,7 @@ library(R6)
 load_dot_env()
 
 # Define RemoteModel class
-RemoteModel <- R6::R6Class("RemoteModel",
+RemoteModel <- R6Class("RemoteModel",
   public = list(
     remote_url = NULL,
     model_name = NULL,
@@ -40,31 +40,21 @@ RemoteModel <- R6::R6Class("RemoteModel",
         stop("REMOTE_API_KEY not found in environment.")
       }
 
-      headers <- httr::add_headers(`X-API-KEY` = api_key)
+      headers <- add_headers(`X-API-KEY` = api_key)
       body <- list(
         content = prompt,
         model = self$model_name,
         system_instructions = system_instructions
       )
 
-      response <- httr::POST(url = self$remote_url, body = body, encode = "multipart", config = headers)
+      response <- POST(url = self$remote_url, body = body, encode = "multipart", headers)
       if (response$status_code != 200) {
         stop(sprintf("Remote API call failed [HTTP %s]: %s",
-                     response$status_code, httr::content(response, "text")))
+                     response$status_code, content(response, "text")))
       }
 
-      parsed <- httr::content(response, as = "parsed", type = "application/json")
-      text_out <- NULL
-      if (!is.null(parsed$text)) {
-        text_out <- parsed$text
-      } else if (!is.null(parsed$response)) {
-        text_out <- parsed$response
-      } else if (is.character(parsed)) {
-        text_out <- parsed
-      } else {
-        text_out <- jsonlite::toJSON(parsed, auto_unbox = TRUE)
-      }
-      return(list(prompt = prompt, response = text_out))
+      parsed <- content(response, as = "parsed", type = "application/json")
+      return(list(prompt = prompt, response = parsed))
     }
   )
 )
