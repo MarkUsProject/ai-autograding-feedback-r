@@ -3,7 +3,7 @@
 # Load required libraries
 library(testthat)
 
-#Define resolve_resource_path to find llm_helpers.R
+# First, we need to define resolve_resource_path to find llm_helpers.R
 resolve_resource_path <- function(rel) {
   p2 <- rel
   if (file.exists(p2)) return(normalizePath(p2, mustWork = TRUE))
@@ -14,8 +14,18 @@ resolve_resource_path <- function(rel) {
   stop("Resource not found: ", rel)
 }
 
+# Load helpers and handle any errors
 helpers_path <- resolve_resource_path("markus_test_scripts/examples/llm_helpers.R")
-source(helpers_path)
+tryCatch({
+  source(helpers_path)
+}, error = function(e) {
+  stop(paste("Failed to load llm_helpers.R:", e$message))
+})
+
+# Test if functions are available
+if (!exists("get_file_paths")) {
+  stop("get_file_paths function not found after loading llm_helpers.R")
+}
 
 # Get file paths using helper function
 file_paths <- get_file_paths()
