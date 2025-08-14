@@ -1,4 +1,5 @@
 # llm_helpers.R
+# LLM helper functions for MarkUs R testing
 
 library(httr)
 library(jsonlite)
@@ -13,28 +14,12 @@ if (file.exists(".env")) {
 # Constants
 ANNOTATION_PROMPT <- "These are the student mistakes you previously identified in the last message. For each of the mistakes you identified, return a JSON object containing an array of annotations, referencing the student's submission file for line and column #s. Each annotation should include: filename: The name of the student's file. content: A short description of the mistake. line_start and line_end: The line number(s) where the mistake occurs. Ensure the JSON is valid and properly formatted. Here is a sample format of the json array to return: { \"annotations\": [{\"filename\": \"submission.R\", \"content\": \"Variable 'x' is unused.\", \"line_start\": 5, \"line_end\": 5}]}. ONLY return the json object and nothing else. Make sure the line #s don't exceed the number of lines in the file. You can use markdown syntax in the annotation's content, especially when denoting code."
 
-#' Resolve resource path for MarkUs environment
-#' @param rel Relative path to resource
-#' @return Normalized absolute path
-resolve_resource_path <- function(rel) {
-  p2 <- rel
-  if (file.exists(p2)) return(normalizePath(p2, mustWork = TRUE))
-  p1 <- file.path("inst", rel)
-  if (file.exists(p1)) return(normalizePath(p1, mustWork = TRUE))
-  p <- system.file(rel, package = "aifeedbackr")
-  if (nzchar(p) && file.exists(p)) return(p)
-  stop("Resource not found: ", rel)
-}
-
 #' Get file paths for submission and prompt
 #' @return List with submission_path and prompt_path
 get_file_paths <- function() {
+  # Both files are submitted through MarkUs, so they should be in current directory
   prompt_path <- normalizePath("prompt.md", mustWork = TRUE)
-  submission_path <- if (file.exists("submission.R")) {
-    normalizePath("submission.R", mustWork = TRUE)
-  } else {
-    resolve_resource_path("markus_test_scripts/examples/submission.R")
-  }
+  submission_path <- normalizePath("submission.R", mustWork = TRUE)
   
   list(
     submission_path = submission_path,
