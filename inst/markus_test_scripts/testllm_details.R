@@ -185,14 +185,13 @@ test_that("Generates LLM feedback for code scope", {
     prompt = code_prompt_path
   )
   
-
+  expect_true(FALSE, info = llm_feedback)
   expectation <- new_expectation(
     type = "success",
     message = ""
   )
   attr(expectation, "markus_overall_comments") <- llm_feedback
   exp_signal(expectation)
-  
 })
 
 test_that("Generates LLM Annotations", {
@@ -205,8 +204,6 @@ test_that("Generates LLM Annotations", {
     output = "direct",
     prompt_text = prompt_text
   )
-  
-  cat("Generated LLM annotations successfully\n")
   
   annotations_json_list <- extract_json(raw_annotation)
   
@@ -222,8 +219,7 @@ test_that("Generates LLM Annotations", {
     if (!is.null(annotations) && length(annotations) > 0) {
       annotations_with_columns <- add_annotation_columns(annotations, submission_r_path)
       
-      cat("Number of annotations created:", length(annotations_with_columns), "\n")
-      
+      # Create annotations and signal them to MarkUs
       for (annotation in annotations_with_columns) {
         filename <- annotation$filename
         content <- annotation$content
@@ -248,8 +244,14 @@ test_that("Generates LLM Annotations", {
         )
         exp_signal(expectation)
       }
+      
+      # Create a success message for this test
+      annotation_summary <- paste("Generated", length(annotations_with_columns), "annotations successfully")
+      expect_true(TRUE, info = annotation_summary)
+    } else {
+      expect_true(TRUE, info = "No annotations generated")
     }
+  } else {
+    expect_true(TRUE, info = "Failed to parse annotation response")
   }
-  
-  expect_true(TRUE)
 })
