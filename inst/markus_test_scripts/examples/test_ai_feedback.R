@@ -16,18 +16,21 @@ resolve_resource_path <- function(rel) {
 
 # Load helpers and handle any errors
 helpers_path <- resolve_resource_path("markus_test_scripts/examples/llm_helpers.R")
+
+# Try to source with more detailed error handling
 tryCatch({
   source(helpers_path)
 }, error = function(e) {
-  stop(paste("Failed to load llm_helpers.R:", e$message))
+  stop(paste("Failed to load llm_helpers.R from", helpers_path, "Error:", e$message))
 })
 
-# Test if functions are available
-if (!exists("get_file_paths")) {
-  stop("get_file_paths function not found after loading llm_helpers.R")
+# Check what functions are actually available after loading
+available_functions <- ls(envir = .GlobalEnv)
+if (!"get_file_paths" %in% available_functions) {
+  stop(paste("get_file_paths function not found. Available functions:", paste(available_functions, collapse = ", ")))
 }
 
-# Get file paths using helper function
+# If we get here, the function should exist
 file_paths <- get_file_paths()
 submission_path <- file_paths$submission_path
 prompt_path <- file_paths$prompt_path
@@ -39,6 +42,8 @@ test_that("Generates LLM feedback for code scope", {
   # Generate LLM feedback
   llm_feedback <<- generate_llm_feedback(submission_path, prompt_path)
   
+  # Strategy: Intentionally fail the test to display LLM feedback in test details
+  # This is required because R's testthat framework only shows messages for failed tests
   expect_true(FALSE, info = llm_feedback)
   
   # Signal MarkUs overall comments (separate metadata expectation)
