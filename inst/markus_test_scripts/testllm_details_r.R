@@ -1,6 +1,7 @@
 #!/usr/bin/env Rscript
 
 library(testthat)
+library(aifeedbackr)
 
 # Load environment variables
 if (file.exists(".env")) {
@@ -17,57 +18,6 @@ resolve_resource_path <- function(rel) {
   p <- system.file(rel, package = "aifeedbackr")
   if (nzchar(p) && file.exists(p)) return(p)
   stop("Resource not found: ", rel)
-}
-
-# Helper function to source package components safely
-source_package_component <- function(component_name) {
-  # Try different paths where the component might exist
-  paths_to_try <- c(
-    file.path("R", paste0(component_name, ".R")),
-    file.path("../../R", paste0(component_name, ".R")),
-    system.file("R", paste0(component_name, ".R"), package = "aifeedbackr")
-  )
-  
-  for (path in paths_to_try) {
-    if (file.exists(path) && nzchar(path)) {
-      tryCatch({
-        source(path, local = FALSE)
-        return(TRUE)
-      }, error = function(e) {
-        # Continue to next path
-      })
-    }
-  }
-  
-  return(FALSE)
-}
-
-# Try to load the package first as a simpler approach
-package_loaded <- tryCatch({
-  library(aifeedbackr)
-  TRUE
-}, error = function(e) {
-  FALSE
-})
-
-# If package loading failed, try individual components
-if (!package_loaded) {
-  # Load required package components
-  required_components <- c("main", "constants", "ClaudeModel", "OpenAIModel", "RemoteModel", 
-                          "code_processing", "template_utils")
-  
-  failed_components <- c()
-  for (component in required_components) {
-    if (!source_package_component(component)) {
-      failed_components <- c(failed_components, component)
-    }
-  }
-  
-  # If critical components failed, give a helpful error
-  if (length(failed_components) > 0) {
-    stop(paste("Failed to load required components:", paste(failed_components, collapse = ", "), 
-               "\nPlease ensure the aifeedbackr package is properly installed or source files are available."))
-  }
 }
 
 code_prompt_path <- normalizePath("prompt.md", mustWork = TRUE)
@@ -89,8 +39,7 @@ run_llm_with_main <- function(
   prompt_text = NULL,
   prompt = NULL
 ) {
-  # Use the main function instead of direct API calls
-  result <- main(
+  result <- aifeedbackr::main(
     prompt_custom = if (!is.null(prompt)) paste(readLines(prompt), collapse = "\n") else NULL,
     prompt_text = prompt_text,
     scope = scope,
@@ -108,7 +57,7 @@ extract_json <- function(response) {
   
   json_objects <- list()
   for (match in matches) {
-    parsed <- try(fromJSON(match, simplifyVector = FALSE), silent = TRUE)
+    parsed <- try(jsonlite::fromJSON(match, simplifyVector = FALSE), silent = TRUE)
     if (!inherits(parsed, "try-error")) {
       json_objects[[length(json_objects) + 1]] <- parsed
     }
@@ -253,4 +202,3 @@ test_that("Generates LLM Annotations", {
     expect_true(TRUE, info = "Failed to parse annotation response")
   }
 })
- 
