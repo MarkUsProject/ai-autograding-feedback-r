@@ -2,29 +2,6 @@
 
 library(testthat)
 
-# Load the main function and dependencies from the package
-# Source the main function
-if (file.exists("R/main.R")) {
-  source("R/main.R")
-} else if (file.exists("../../R/main.R")) {
-  source("../../R/main.R")
-} else {
-  # Try loading from installed package
-  library(aifeedbackr)
-}
-
-# Load other required R files for the package functionality
-required_files <- c("constants.R", "ClaudeModel.R", "OpenAIModel.R", "RemoteModel.R", 
-                   "code_processing.R", "template_utils.R")
-
-for (file in required_files) {
-  if (file.exists(file.path("R", file))) {
-    source(file.path("R", file))
-  } else if (file.exists(file.path("../../R", file))) {
-    source(file.path("../../R", file))
-  }
-}
-
 # Load environment variables
 if (file.exists(".env")) {
   try({
@@ -40,6 +17,43 @@ resolve_resource_path <- function(rel) {
   p <- system.file(rel, package = "aifeedbackr")
   if (nzchar(p) && file.exists(p)) return(p)
   stop("Resource not found: ", rel)
+}
+
+# Helper function to source package components safely
+source_package_component <- function(component_name) {
+  # Try different paths where the component might exist
+  paths_to_try <- c(
+    file.path("R", paste0(component_name, ".R")),
+    file.path("../../R", paste0(component_name, ".R")),
+    system.file("R", paste0(component_name, ".R"), package = "aifeedbackr")
+  )
+  
+  for (path in paths_to_try) {
+    if (file.exists(path) && nzchar(path)) {
+      tryCatch({
+        source(path, local = FALSE)
+        return(TRUE)
+      }, error = function(e) {
+        # Continue to next path
+      })
+    }
+  }
+  
+  # If we can't source individual files, try loading the package
+  tryCatch({
+    library(aifeedbackr)
+    return(TRUE)
+  }, error = function(e) {
+    stop(paste("Could not load package component:", component_name))
+  })
+}
+
+# Load required package components
+required_components <- c("main", "constants", "ClaudeModel", "OpenAIModel", "RemoteModel", 
+                        "code_processing", "template_utils")
+
+for (component in required_components) {
+  source_package_component(component)
 }
 
 code_prompt_path <- normalizePath("prompt.md", mustWork = TRUE)
@@ -224,4 +238,5 @@ test_that("Generates LLM Annotations", {
   } else {
     expect_true(TRUE, info = "Failed to parse annotation response")
   }
-}) 
+})
+ 
