@@ -39,21 +39,35 @@ source_package_component <- function(component_name) {
     }
   }
   
-  # If we can't source individual files, try loading the package
-  tryCatch({
-    library(aifeedbackr)
-    return(TRUE)
-  }, error = function(e) {
-    stop(paste("Could not load package component:", component_name))
-  })
+  return(FALSE)
 }
 
-# Load required package components
-required_components <- c("main", "constants", "ClaudeModel", "OpenAIModel", "RemoteModel", 
-                        "code_processing", "template_utils")
+# Try to load the package first as a simpler approach
+package_loaded <- tryCatch({
+  library(aifeedbackr)
+  TRUE
+}, error = function(e) {
+  FALSE
+})
 
-for (component in required_components) {
-  source_package_component(component)
+# If package loading failed, try individual components
+if (!package_loaded) {
+  # Load required package components
+  required_components <- c("main", "constants", "ClaudeModel", "OpenAIModel", "RemoteModel", 
+                          "code_processing", "template_utils")
+  
+  failed_components <- c()
+  for (component in required_components) {
+    if (!source_package_component(component)) {
+      failed_components <- c(failed_components, component)
+    }
+  }
+  
+  # If critical components failed, give a helpful error
+  if (length(failed_components) > 0) {
+    stop(paste("Failed to load required components:", paste(failed_components, collapse = ", "), 
+               "\nPlease ensure the aifeedbackr package is properly installed or source files are available."))
+  }
 }
 
 code_prompt_path <- normalizePath("prompt.md", mustWork = TRUE)
