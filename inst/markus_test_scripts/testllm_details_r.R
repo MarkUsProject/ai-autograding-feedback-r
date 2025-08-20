@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 
 library(testthat)
-library(aifeedbackr)
+library(jsonlite)
 
 # Load environment variables
 if (file.exists(".env")) {
@@ -29,7 +29,10 @@ submission_r_path <- if (file.exists("submission.R")) {
 
 ANNOTATION_PROMPT <- "These are the student mistakes you previously identified in the last message. For each of the mistakes you identified, return a JSON object containing an array of annotations, referencing the student's submission file for line and column #s. Each annotation should include: filename: The name of the student's file. content: A short description of the mistake. line_start and line_end: The line number(s) where the mistake occurs. Ensure the JSON is valid and properly formatted. Here is a sample format of the json array to return: { \"annotations\": [{\"filename\": \"submission.R\", \"content\": \"Variable 'x' is unused.\", \"line_start\": 5, \"line_end\": 5}]}. ONLY return the json object and nothing else. Make sure the line #s don't exceed the number of lines in the file. You can use markdown syntax in the annotation's content, especially when denoting code."
 
-run_llm_with_main <- function(
+# Initialize global variable for feedback
+llm_feedback <- NULL
+
+run_llm_with_subprocess <- function(
   submission,
   model,
   scope,
@@ -39,17 +42,75 @@ run_llm_with_main <- function(
   prompt_text = NULL,
   prompt = NULL
 ) {
-  result <- aifeedbackr::main(
-    prompt_custom = if (!is.null(prompt)) paste(readLines(prompt), collapse = "\n") else NULL,
-    prompt_text = prompt_text,
-    scope = scope,
-    submission = submission,
-    model = model,
-    output = if (output == "stdout") "" else output,
-    question = question
+  # Create a temporary R script to avoid complex shell escaping
+  temp_script <- tempfile(fileext = ".R")
+  
+  # Build the R code to execute - use current environment and relative paths
+  r_code <- paste0(
+    "# Load environment variables from .env if exists\n",
+    "if (file.exists('.env')) {\n",
+    "  try({\n",
+    "    if (requireNamespace('dotenv', quietly = TRUE)) dotenv::load_dot_env('.env')\n",
+    "  }, silent = TRUE)\n",
+    "}\n",
+    "library(jsonlite)\n",
+    "library(httr)\n",
+    "# Try multiple library locations for aifeedbackr\n",
+    "aifeedbackr_loaded <- FALSE\n",
+    "lib_paths <- c('/usr/local/lib/R/site-library', .libPaths())\n",
+    "for (lib_path in lib_paths) {\n",
+    "  if (dir.exists(file.path(lib_path, 'aifeedbackr'))) {\n",
+    "    tryCatch({\n",
+    "      library(aifeedbackr, lib.loc = lib_path)\n",
+    "      aifeedbackr_loaded <- TRUE\n",
+    "      break\n",
+    "    }, error = function(e) { })\n",
+    "  }\n",
+    "}\n",
+    "if (!aifeedbackr_loaded) {\n",
+    "  library(aifeedbackr)\n",
+    "}\n",
+    "result <- aifeedbackr:::main(\n",
+    "  prompt_custom = ", if (!is.null(prompt)) {
+      prompt_content <- paste(readLines(prompt), collapse = "\n")
+      deparse(prompt_content)
+    } else if (!is.null(prompt_text)) {
+      deparse(prompt_text)
+    } else "NULL", ",\n",
+    "  scope = ", deparse(scope), ",\n",
+    "  submission = ", deparse(submission), ",\n",
+    "  model = ", deparse(model), ",\n",
+    "  output = ", deparse(if (output == "stdout") "" else output), ",\n",
+    "  question = ", if (!is.null(question)) deparse(question) else "NULL", "\n",
+    ")\n",
+    "cat(result$response)\n"
   )
   
-  return(result$response)
+  # Write the R code to temporary file
+  writeLines(r_code, temp_script)
+  
+  # Execute the temporary script and capture both stdout and stderr
+  cmd <- paste("Rscript", temp_script, "2>&1")
+  result <- system(cmd, intern = TRUE)
+  exit_status <- attr(result, "status")
+  
+  # Clean up
+  unlink(temp_script)
+  
+  # Check if command failed
+  if (!is.null(exit_status) && exit_status != 0) {
+    error_msg <- paste("Rscript command failed with status", exit_status)
+    if (length(result) > 0) {
+      error_msg <- paste(error_msg, "Output:", paste(result, collapse = "\n"))
+    }
+    stop(error_msg)
+  }
+  
+  if (length(result) == 0) {
+    stop("No output from LLM command")
+  }
+  
+  return(paste(result, collapse = "\n"))
 }
 
 extract_json <- function(response) {
@@ -57,7 +118,7 @@ extract_json <- function(response) {
   
   json_objects <- list()
   for (match in matches) {
-    parsed <- try(jsonlite::fromJSON(match, simplifyVector = FALSE), silent = TRUE)
+    parsed <- try(fromJSON(match, simplifyVector = FALSE), silent = TRUE)
     if (!inherits(parsed, "try-error")) {
       json_objects[[length(json_objects) + 1]] <- parsed
     }
@@ -70,7 +131,6 @@ add_annotation_columns <- function(annotations, submission_file_path) {
   tryCatch({
     file_lines <- readLines(submission_file_path, warn = FALSE)
   }, error = function(e) {
-    cat("Error reading submission file:", e$message, "\n")
     return(list())
   })
   
@@ -82,7 +142,6 @@ add_annotation_columns <- function(annotations, submission_file_path) {
     line_end <- annotation$line_end
     
     if (is.null(file_lines) || line_start > length(file_lines) || line_end > length(file_lines)) {
-      cat("Skipping invalid line numbers for", filename, ":", line_start, "-", line_end, "\n")
       next
     }
     
@@ -124,7 +183,7 @@ add_annotation_columns <- function(annotations, submission_file_path) {
 }
 
 test_that("Generates LLM feedback for code scope", {
-  llm_feedback <<- run_llm_with_main(
+  llm_feedback <<- run_llm_with_subprocess(
     submission = submission_r_path,
     model = "claude",
     scope = "code",
@@ -142,14 +201,20 @@ test_that("Generates LLM feedback for code scope", {
 })
 
 test_that("Generates LLM Annotations", {
+  if (is.null(llm_feedback) || llm_feedback == "") {
+    expect_true(TRUE, info = "Skipping annotations test - no LLM feedback available from previous test")
+    return()
+  }
+  
   prompt_text <- paste0("Previous message: ", llm_feedback, ". ", ANNOTATION_PROMPT)
   
-  raw_annotation <- run_llm_with_main(
+  raw_annotation <- run_llm_with_subprocess(
     submission = submission_r_path,
-    model = "claude",
+    model = "claude", 
     scope = "code",
     output = "direct",
-    prompt_text = prompt_text
+    prompt_text = prompt_text,
+    prompt = NULL
   )
   
   annotations_json_list <- extract_json(raw_annotation)
@@ -166,7 +231,6 @@ test_that("Generates LLM Annotations", {
     if (!is.null(annotations) && length(annotations) > 0) {
       annotations_with_columns <- add_annotation_columns(annotations, submission_r_path)
       
-      # Create annotations and signal them to MarkUs
       for (annotation in annotations_with_columns) {
         filename <- annotation$filename
         content <- annotation$content
@@ -192,7 +256,6 @@ test_that("Generates LLM Annotations", {
         exp_signal(expectation)
       }
       
-      # Create a success message for this test
       annotation_summary <- paste("Generated", length(annotations_with_columns), "annotations successfully")
       expect_true(TRUE, info = annotation_summary)
     } else {
