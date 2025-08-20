@@ -105,13 +105,15 @@ run_llm_with_subprocess <- function(
   if (!is.null(exit_status) && exit_status != 0) {
     error_msg <- paste("Rscript command failed with status", exit_status)
     if (length(result) > 0) {
-      error_msg <- paste(error_msg, "Output:", paste(result, collapse = "\n"))
+      # Include more detailed error output
+      full_output <- paste(result, collapse = "\n")
+      error_msg <- paste(error_msg, "Full subprocess output:", full_output)
     }
     stop(error_msg)
   }
   
   if (length(result) == 0) {
-    stop("No output from LLM command")
+    stop("No output from LLM command - subprocess returned empty result")
   }
   
   return(paste(result, collapse = "\n"))
@@ -210,15 +212,33 @@ test_that("Generates LLM Annotations", {
     return()
   }
   
-  prompt_text <- paste0("Previous message: ", llm_feedback, ". ", ANNOTATION_PROMPT)
+  # Debug info in error message and truncate feedback
+  feedback_length <- nchar(llm_feedback)
+  feedback_preview <- substr(llm_feedback, 1, 200)
   
-  raw_annotation <- run_llm_with_subprocess(
-    submission = submission_r_path,
-    model = "claude", 
-    scope = "code",
-    output = "direct",
-    prompt_text = prompt_text,
-  )
+  # Truncate feedback if too long (keep under 1500 chars for stable API calls)
+  if (feedback_length > 1500) {
+    truncated_feedback <- substr(llm_feedback, 1, 1500)
+    truncated_feedback <- paste0(truncated_feedback, "... (truncated)")
+  } else {
+    truncated_feedback <- llm_feedback
+  }
+  
+  prompt_text <- paste0("Previous message: ", truncated_feedback, ". ", ANNOTATION_PROMPT)
+  
+  tryCatch({
+    raw_annotation <- run_llm_with_subprocess(
+      submission = submission_r_path,
+      model = "claude", 
+      scope = "code",
+      output = "direct",
+      prompt_text = prompt_text,
+      prompt = NULL
+    )
+  }, error = function(e) {
+    stop(paste("LLM annotation failed. Feedback length:", feedback_length, 
+               "Preview:", feedback_preview, "Error:", e$message))
+  })
   
   annotations_json_list <- extract_json(raw_annotation)
   
