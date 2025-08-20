@@ -53,8 +53,12 @@ run_llm_with_subprocess <- function(
     "    if (requireNamespace('dotenv', quietly = TRUE)) dotenv::load_dot_env('.env')\n",
     "  }, silent = TRUE)\n",
     "}\n",
-    "library(jsonlite)\n",
+    "# Load all required dependencies\n",
     "library(httr)\n",
+    "library(jsonlite)\n",
+    "library(dotenv)\n",
+    "library(R6)\n",
+    "library(base64enc)\n",
     "# Try multiple library locations for aifeedbackr\n",
     "aifeedbackr_loaded <- FALSE\n",
     "lib_paths <- c('/usr/local/lib/R/site-library', .libPaths())\n",
@@ -214,7 +218,6 @@ test_that("Generates LLM Annotations", {
     scope = "code",
     output = "direct",
     prompt_text = prompt_text,
-    prompt = NULL
   )
   
   annotations_json_list <- extract_json(raw_annotation)

@@ -84,7 +84,7 @@ OpenAIModel <- R6Class("OpenAIModel",
 
       }, error = function(e) {
         message("Error in OpenAI API call: ", conditionMessage(e))
-        return(paste("ERROR: Failed to call OpenAI API —", conditionMessage(e)))
+        return(paste("ERROR: Failed to call OpenAI API", conditionMessage(e)))
       })
       
       return(list(prompt = prompt, response = response_text))
