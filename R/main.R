@@ -3,20 +3,14 @@
 suppressWarnings(suppressMessages({
   library(optparse)
   library(jsonlite)
-  library(httr)
 }))
 
 # Load markdown output template
 load_file <- function(file_path) {
-  if (file.exists(file_path)) {
-    return(paste(readLines(file_path), collapse = "\n"))
+  if (!file.exists(file_path)) {
+    stop(paste("Error: Template file not found:", file_path))
   }
-  parts <- strsplit(file_path, "/")[[1]]
-  pkg_path <- do.call(system.file, c(as.list(parts), package = "aifeedbackr"))
-  if (nzchar(pkg_path) && file.exists(pkg_path)) {
-    return(paste(readLines(pkg_path), collapse = "\n"))
-  }
-  stop(paste("Error: Template file not found:", file_path))
+  paste(readLines(file_path), collapse = "\n")
 }
 
 main <- function(
@@ -39,11 +33,12 @@ main <- function(
   prompt_content <- ""
   system_instructions <- ""
   marking_instructions_content <- NULL
-
-  if (!is.null(system_prompt) && system_prompt != "") {
+  
+  if (!is.null(system_prompt) && system_prompt != ""){
     system_instructions <- paste(readLines(system_prompt), collapse = "\n")
   }
 
+  # Load marking instructions if provided
   if (!is.null(marking_instructions) && marking_instructions != "") {
     tryCatch({
       marking_instructions_content <- paste(readLines(marking_instructions), collapse = "\n")
@@ -83,37 +78,17 @@ main <- function(
   } else {
     markdown_template <- "{response}"
   }
-
-  # Derive plain response text
-  response_text <- ""
-  if (is.list(response) && !is.null(response$response)) {
-    response_text <- paste(response$response, collapse = "\n")
-  } else if (is.character(response)) {
-    response_text <- paste(response, collapse = "\n")
-  } else {
-    response_text <- paste(capture.output(str(response, max.level = 1)), collapse = "\n")
-  }
-
   output_text <- markdown_template
   output_text <- gsub("\\{model\\}", model, output_text)
   output_text <- gsub("\\{request\\}", prompt_content, output_text)
-  output_text <- gsub("\\{response\\}", response_text, output_text)
+  output_text <- gsub("\\{response\\}", paste(response[[2]], collapse = "\n"), output_text)
   output_text <- gsub("\\{timestamp\\}", format(Sys.time(), "%Y%m%d_%H%M%S"), output_text)
   output_text <- gsub("\\{submission\\}", submission, output_text)
 
-  if (nzchar(output)) {
+  if (output != "") {
     dir.create(dirname(output), recursive = TRUE, showWarnings = FALSE)
     writeLines(output_text, output)
   } else {
     cat(output_text)
   }
-
-  invisible(list(
-    response = response_text,
-    output   = output_text,
-    model    = model,
-    scope    = scope,
-    prompt   = prompt_content,
-    raw      = response
-  ))
 }
