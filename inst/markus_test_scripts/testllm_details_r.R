@@ -59,7 +59,6 @@ run_llm_with_subprocess <- function(
     "library(dotenv)\n",
     "library(R6)\n",
     "library(base64enc)\n",
-    "# Try multiple library locations for aifeedbackr\n",
     "aifeedbackr_loaded <- FALSE\n",
     "lib_paths <- c('/usr/local/lib/R/site-library', .libPaths())\n",
     "for (lib_path in lib_paths) {\n",
