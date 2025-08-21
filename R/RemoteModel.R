@@ -40,20 +40,20 @@ RemoteModel <- R6Class("RemoteModel",
         stop("REMOTE_API_KEY not found in environment.")
       }
 
-      headers <- add_headers(`X-API-KEY` = api_key)
+      headers <- httr::add_headers(`X-API-KEY` = api_key)
       body <- list(
         content = prompt,
         model = self$model_name,
         system_instructions = system_instructions
       )
 
-      response <- POST(url = self$remote_url, body = body, encode = "multipart", headers)
+      response <- httr::POST(url = self$remote_url, body = body, encode = "multipart", headers)
       if (response$status_code != 200) {
         stop(sprintf("Remote API call failed [HTTP %s]: %s",
-                     response$status_code, content(response, "text")))
+                     response$status_code, httr::content(response, "text")))
       }
 
-      parsed <- content(response, as = "parsed", type = "application/json")
+      parsed <- httr::content(response, as = "parsed", type = "application/json")
       return(list(prompt = prompt, response = parsed))
     }
   )

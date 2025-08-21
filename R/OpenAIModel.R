@@ -28,7 +28,7 @@ OpenAIModel <- R6Class("OpenAIModel",
       response_text <- tryCatch({
         url <- "https://api.openai.com/v1/chat/completions"
 
-        headers <- add_headers(
+        headers <- httr::add_headers(
           'Authorization' = paste('Bearer', self$api_key),
           'Content-Type' = 'application/json'
         )
@@ -41,7 +41,7 @@ OpenAIModel <- R6Class("OpenAIModel",
             submission_img <- submission_images[i]
             image_blocks <- append(image_blocks, list(list(
               type = "image_url",
-              image_url = list(url = paste0("data:image/png;base64,", base64encode(submission_img)))
+              image_url = list(url = paste0("data:image/png;base64,", base64enc::base64encode(submission_img)))
             )))
           }
         }
@@ -50,7 +50,7 @@ OpenAIModel <- R6Class("OpenAIModel",
         if (!is.null(solution_image)) {
           image_blocks <- append(image_blocks, list(list(
             type = "image_url",
-            image_url = list(url = paste0("data:image/png;base64,", base64encode(solution_image)))
+            image_url = list(url = paste0("data:image/png;base64,", base64enc::base64encode(solution_image)))
           )))
         }
 
@@ -66,20 +66,20 @@ OpenAIModel <- R6Class("OpenAIModel",
           )
         )
 
-        body <- toJSON(list(
+        body <- jsonlite::toJSON(list(
           model = "gpt-4o",
           messages = messages,
           max_tokens = 1000,
           temperature = 0.5
         ), auto_unbox = TRUE)
 
-        res <- POST(url, body = body, encode = "raw", config = headers)
+        res <- httr::POST(url, body = body, encode = "raw", config = headers)
 
         if (res$status_code != 200) {
-          stop("OpenAI API call failed: ", content(res, "text"))
+          stop("OpenAI API call failed: ", httr::content(res, "text"))
         }
 
-        parsed <- content(res, as = "parsed", type = "application/json")
+        parsed <- httr::content(res, as = "parsed", type = "application/json")
         parsed$choices[[1]]$message$content
 
       }, error = function(e) {
