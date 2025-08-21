@@ -9,7 +9,7 @@ OpenAIModel <- R6Class("OpenAIModel",
     api_key = NULL,
 
     initialize = function() {
-      load_dot_env()  # Load .env variables like OPENAI_API_KEY
+      dotenv::load_dot_env()  # Load .env variables like OPENAI_API_KEY
 
       #' Initialize the OpenAIModel instance by loading the API key.
       self$api_key <- Sys.getenv("OPENAI_API_KEY")

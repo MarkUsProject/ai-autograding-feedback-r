@@ -33,7 +33,7 @@ RemoteModel <- R6Class("RemoteModel",
       #' @return A list with prompt and model response text, or NULL if failed
 
       # Load environment variables from .env
-      load_dot_env()
+      dotenv::load_dot_env()
 
       api_key <- Sys.getenv("REMOTE_API_KEY")
       if (api_key == "") {

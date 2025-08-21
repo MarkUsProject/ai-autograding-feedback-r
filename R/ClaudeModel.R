@@ -9,7 +9,7 @@ ClaudeModel <- R6Class("ClaudeModel",
     api_key = NULL,
     model_name = "claude-3-7-sonnet-20250219",
     initialize = function() {
-      load_dot_env()
+      dotenv::load_dot_env()
 
       self$api_key <- Sys.getenv("CLAUDE_API_KEY")
       if (self$api_key == "") {
