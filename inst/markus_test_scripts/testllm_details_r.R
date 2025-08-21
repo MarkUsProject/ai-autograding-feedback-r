@@ -142,7 +142,6 @@ add_annotation_columns <- function(annotations, submission_file_path) {
   annotations_with_columns <- list()
   
   for (annotation in annotations) {
-    filename <- annotation$filename
     line_start <- annotation$line_start
     line_end <- annotation$line_end
     
