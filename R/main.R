@@ -23,7 +23,7 @@ main <- function(
   prompt_custom = NULL,
   scope,
   submission,
-  solution = "",
+  solution = NULL,
   model,
   remote_model,
   output = "",
