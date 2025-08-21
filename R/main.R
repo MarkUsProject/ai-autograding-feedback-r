@@ -13,6 +13,10 @@ load_file <- function(file_path) {
   paste(readLines(file_path), collapse = "\n")
 }
 
+
+#' Generate AI Feedback.
+#'
+#' @export
 main <- function(
   prompt = NULL,
   prompt_text = NULL,
@@ -33,7 +37,7 @@ main <- function(
   prompt_content <- ""
   system_instructions <- ""
   marking_instructions_content <- NULL
-  
+
   if (!is.null(system_prompt) && system_prompt != ""){
     system_instructions <- paste(readLines(system_prompt), collapse = "\n")
   }
