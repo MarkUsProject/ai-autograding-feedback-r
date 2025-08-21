@@ -5,9 +5,6 @@ library(jsonlite)
 library(dotenv)
 library(R6)
 
-# Load environment variables from .env
-load_dot_env()
-
 # Define RemoteModel class
 RemoteModel <- R6Class("RemoteModel",
   public = list(
@@ -34,6 +31,9 @@ RemoteModel <- R6Class("RemoteModel",
       #' @param prompt A character string prompt for the model
       #' @param system_instructions System-level model instructions
       #' @return A list with prompt and model response text, or NULL if failed
+
+      # Load environment variables from .env
+      load_dot_env()
 
       api_key <- Sys.getenv("REMOTE_API_KEY")
       if (api_key == "") {
