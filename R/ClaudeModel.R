@@ -21,7 +21,8 @@ ClaudeModel <- R6Class("ClaudeModel",
       prompt,
       system_instructions,
       submission_images = NULL,
-      solution_image = NULL
+      solution_image = NULL,
+      schema = NULL
     ) {
       #' Generate a Claude response, optionally including submission and solution images.
 

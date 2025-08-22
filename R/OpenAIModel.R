@@ -18,12 +18,13 @@ OpenAIModel <- R6Class("OpenAIModel",
       }
     },
 
-    generate_response = function(prompt, system_instructions, submission_images = NULL, solution_image = NULL) {
+    generate_response = function(prompt, system_instructions, submission_images = NULL, solution_image = NULL, json_schema = NULL) {
       #' Generate a model response using the OpenAI API, including optional images.
       #' @param prompt User prompt
       #' @param system_instructions System-level instructions for the model
       #' @param submission_images Optional file path to submission images
       #' @param solution_image Optional file path to solution image
+      #' @param schema Optional JSON schema for structured response
       #' @return A list with the original prompt and the model's response or error message
       response_text <- tryCatch({
         url <- "https://api.openai.com/v1/chat/completions"
@@ -66,13 +67,46 @@ OpenAIModel <- R6Class("OpenAIModel",
           )
         )
 
-        body <- jsonlite::toJSON(list(
+        body_list <- list(
           model = "gpt-4o",
           messages = messages,
           max_tokens = 1000,
           temperature = 0.5
-        ), auto_unbox = TRUE)
+        )
 
+        if (!is.null(json_schema)) {
+          if (!file.exists(json_schema)) stop("Schema file not found: ", json_schema)
+
+          raw <- jsonlite::fromJSON(json_schema, simplifyVector = FALSE)
+
+          # Wrapper support: { name, description, schema }  OR  bare schema
+          has_wrapper  <- !is.null(raw$schema)
+          inner_schema <- if (has_wrapper) raw$schema else raw
+
+          # Use wrapper name if present; otherwise default to filename
+          schema_name <- if (has_wrapper && !is.null(raw$name) && nzchar(raw$name)) {
+            raw$name
+          } else {
+            tools::file_path_sans_ext(basename(json_schema))
+          }
+
+          # Validate required shape for OpenAI structured outputs
+          if (is.null(inner_schema$type) || inner_schema$type != "object") {
+            stop('json_schema must have root {"type":"object"}.')
+          }
+
+          body_list$response_format <- list(
+            type = "json_schema",
+            response_format = list(
+              name   = schema_name,  # <-- REQUIRED (your file gives "student_code_annotation")
+              strict = TRUE,
+              schema = inner_schema
+            )
+          )
+        }
+
+        body <- jsonlite::toJSON(body_list, auto_unbox = TRUE)
+        cat(body, "\n")  # Debugging output
         res <- httr::POST(url, body = body, encode = "raw", config = headers)
 
         if (res$status_code != 200) {
