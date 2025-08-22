@@ -101,7 +101,7 @@ OpenAIModel <- R6Class("OpenAIModel",
 
           body_list$response_format <- list(
             type = "json_schema",
-            response_format = list(
+            json_schema = list(
               name   = schema_name,  # <-- REQUIRED (your file gives "student_code_annotation")
               strict = TRUE,
               schema = inner_schema
@@ -110,7 +110,6 @@ OpenAIModel <- R6Class("OpenAIModel",
         }
 
         body <- jsonlite::toJSON(body_list, auto_unbox = TRUE)
-        cat(body, "\n")  # Debugging output
         res <- httr::POST(url, body = body, encode = "raw", config = headers)
 
         if (res$status_code != 200) {

@@ -45,7 +45,7 @@ tests <- list(
       submission = file.path(path, "code_example/fail_submission/fail_submission.R"),
       solution = file.path(path, "code_example/solution.R"),
       output = "output/test_annotations_openai.md",
-      json_schema = file.path(path, "schema/code_annotation_schema.json")
+      json_schema = file.path(path, "schema/code_annotations_schema.json")
     )
   ),
   list(
@@ -57,7 +57,7 @@ tests <- list(
       submission = file.path(path, "pdf_example/student_pdf_submission.pdf"),
       solution = file.path(path, "pdf_example/instructor_pdf_solution.pdf"),
       output = "output/test_pdf_annotations_openai.md",
-      json_schema = file.path(path, "schema/code_annotation_schema.json")
+      json_schema = file.path(path, "schema/code_annotations_schema.json")
     )
   )
 )
