@@ -75,7 +75,9 @@ OpenAIModel <- R6Class("OpenAIModel",
         )
 
         if (!is.null(json_schema)) {
-          if (!file.exists(json_schema)) stop("Schema file not found: ", json_schema)
+          if (!file.exists(json_schema)){
+            stop("Schema file not found: ", json_schema)
+          }
 
           raw <- jsonlite::fromJSON(json_schema, simplifyVector = FALSE)
 
