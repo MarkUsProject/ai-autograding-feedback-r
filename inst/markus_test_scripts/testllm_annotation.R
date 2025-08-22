@@ -50,7 +50,9 @@ extract_json <- function(response) {
   for (match in matches) {
     parsed <- try(fromJSON(match, simplifyVector = FALSE), silent = TRUE)
     if (!inherits(parsed, "try-error")) {
-      json_objects[[length(json_objects) + 1]] <- parsed
+      if (!is.null(parsed$annotations)) {
+        json_objects[[length(json_objects) + 1]] <- parsed
+      }
     }
   }
   
@@ -146,8 +148,11 @@ test_that("Generates LLM feedback for code scope", {
   attr(expectation, "markus_overall_comments") <- llm_feedback
   exp_signal(expectation)
   
-  # Use expect_true to create a message that shows in detailed view
-  expect_true(TRUE, info = llm_feedback)
+  expectation_with_message <- new_expectation(
+    type = "success",
+    message = llm_feedback
+  )
+  exp_signal(expectation_with_message)
 })
 
 test_that("Generates LLM Annotations", {
@@ -167,6 +172,11 @@ test_that("Generates LLM Annotations", {
   
   if (is.null(raw_annotation) || raw_annotation == "") {
     fail("No annotation response from model")
+  }
+  
+  # Check if JSON appears to be truncated
+  if (!grepl("\\}\\s*$", raw_annotation)) {
+    fail(paste("JSON response appears to be truncated. Raw response:", substr(raw_annotation, 1, 200)))
   }
   
   annotations_json_list <- extract_json(raw_annotation)
