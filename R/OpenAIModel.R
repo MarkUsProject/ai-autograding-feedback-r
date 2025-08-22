@@ -9,11 +9,7 @@ OpenAIModel <- R6Class("OpenAIModel",
     api_key = NULL,
 
     initialize = function() {
-      if (file.exists(".env")) {
-        dotenv::load_dot_env(".env")
-      } else {
-        message("No .env file found, using environment variables directly.")
-      }
+      dotenv::load_dot_env(".env")
 
       #' Initialize the OpenAIModel instance by loading the API key.
       self$api_key <- Sys.getenv("OPENAI_API_KEY")
@@ -102,7 +98,7 @@ OpenAIModel <- R6Class("OpenAIModel",
           body_list$response_format <- list(
             type = "json_schema",
             json_schema = list(
-              name   = schema_name,  # <-- REQUIRED (your file gives "student_code_annotation")
+              name   = schema_name,
               strict = TRUE,
               schema = inner_schema
             )
