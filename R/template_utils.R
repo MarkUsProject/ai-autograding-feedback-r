@@ -15,8 +15,8 @@ library(pdftools)
 #' @param ... Additional key-value pairs for placeholder replacement
 #'
 #' @return Character string with placeholders replaced
-#' 
-#' 
+#'
+#'
 #' @export
 render_prompt_template <- function(
   prompt_content,
@@ -29,29 +29,29 @@ render_prompt_template <- function(
   marking_instructions = NULL,
   ...
 ) {
-  
+
   # Start with additional arguments
   template_data <- list(...)
-  
+
   # Handle marking instructions placeholder
   if (!is.null(marking_instructions)) {
     template_data$marking_instructions <- marking_instructions
   } else if (grepl("\\{marking_instructions\\}", prompt_content)) {
     template_data$marking_instructions <- ""
   }
-  
+
   # Generate file references if needed
   if (grepl("\\{file_references\\}", prompt_content)) {
     template_data$file_references <- gather_file_references(submission, solution, test_output)
   }
-  
+
   # Generate file contents if needed
   if (grepl("\\{file_contents\\}", prompt_content)) {
     files_to_process <- list(submission, solution, test_output)
     files_to_process <- files_to_process[!sapply(files_to_process, is.null)]
     template_data$file_contents <- gather_file_contents(files_to_process)
   }
-  
+
   # Handle image placeholders
   if (grepl("\\{submission_image\\}", prompt_content) && !("submission_image" %in% names(template_data))) {
     if (has_submission_image && has_solution_image) {
@@ -62,7 +62,7 @@ render_prompt_template <- function(
       template_data$submission_image <- "[Submission Images Attached]"
     }
   }
-  
+
   if (grepl("\\{solution_image\\}", prompt_content) && !("solution_image" %in% names(template_data))) {
     if (has_submission_image && has_solution_image) {
       template_data$solution_image <- "The final attached image is the expected solution."
@@ -72,7 +72,7 @@ render_prompt_template <- function(
       template_data$solution_image <- "[Solution Image Attached]"
     }
   }
-  
+
   # Replace placeholders
   result <- prompt_content
   for (key in names(template_data)) {
@@ -81,37 +81,37 @@ render_prompt_template <- function(
       result <- gsub(placeholder, template_data[[key]], result, fixed = TRUE)
     }
   }
-  
+
   remaining_placeholders <- regmatches(result, gregexpr("\\{[a-zA-Z_][a-zA-Z0-9_]+\\}", result))[[1]]
   if (length(remaining_placeholders) > 0) {
     stop("Missing placeholders in template: ", paste(remaining_placeholders, collapse = ", "))
   }
-  
+
   return(result)
 }
 
 #' Generate file reference descriptions
-#' 
+#'
 #' @param submission Path to student's submission file
 #' @param solution Path to instructor's solution file (optional)
 #' @param test_output Path to test output file (optional)
-#' 
+#'
 #' @return Character string with file descriptions
 gather_file_references <- function(submission, solution = NULL, test_output = NULL) {
   references <- c()
-  
+
   if (!is.null(submission)) {
     references <- c(references, paste("The student's submission file is", basename(submission), "."))
   }
-  
+
   if (!is.null(solution)) {
     references <- c(references, paste("The instructor's solution file is", basename(solution), "."))
   }
-  
+
   if (!is.null(test_output)) {
     references <- c(references, paste("The student's test output file is", basename(test_output), "."))
   }
-  
+
   return(paste(references, collapse = "\n"))
 }
 
@@ -127,10 +127,10 @@ gather_file_contents <- function(file_paths, question = NULL) {
     if (is.null(file_path) || !file.exists(file_path)){
       next
     }
-    
+
     filename <- basename(file_path)
     lines <- NULL
-    
+
     tryCatch({
       # Only extract the question block if question is set
       if (!is.null(question)) {
@@ -168,7 +168,7 @@ gather_file_contents <- function(file_paths, question = NULL) {
 #' Extract text from PDF files
 #'
 #' @param pdf_path Path to PDF file
-#' 
+#'
 #' @return Character string with extracted text
 extract_pdf_text <- function(pdf_path) {
   tryCatch({
@@ -357,59 +357,59 @@ extract_question_from_txt <- function(submission, question) {
 
 #' Extract R code and context from QMD/RMD file using simple parsing
 #' @param qmd_path Path to QMD/RMD file
-#' @param timeout Timeout in seconds for code execution  
+#' @param timeout Timeout in seconds for code execution
 #' @param output_dir Output directory (default: tempdir())
 #' @return Character vector of PNG file paths
 run_qmd_collect_png <- function(qmd_path, timeout = 60, output_dir = NULL) {
   if (!file.exists(qmd_path)) {
     stop("QMD file not found: ", qmd_path)
   }
-  
+
   if (is.null(output_dir)) {
     output_dir <- tempdir()
   }
-  
+
   if (!dir.exists(output_dir)) {
     dir.create(output_dir, recursive = TRUE)
   }
-  
+
   tryCatch({
     code_chunks <- extract_qmd_chunks_with_context(qmd_path)
-    
+
     if (length(code_chunks) == 0) {
       warning("No R chunks with question context found")
       return(character(0))
     }
-    
+
     abs_output_dir <- normalizePath(output_dir, mustWork = TRUE)
-    
+
     # Execute in child process with plot capture
     png_files <- callr::r_safe(
-      function(qmd_path, code_chunks, output_dir_path) { 
+      function(qmd_path, code_chunks, output_dir_path) {
         library(withr)
         library(tidyverse)
-        
+
         png_files <- character(0)
         plot_counters <- new.env()
-        
+
         temp_dir <- dirname(qmd_path)
-        
+
         withr::with_dir(temp_dir, {
           # Disable default PDF device to prevent Rplots.pdf
           options(device = function() pdf(NULL))
-          
+
           for (chunk_info in code_chunks) {
             context_tag <- chunk_info$context
             code_lines <- chunk_info$code
-            
+
             if (length(code_lines) > 0) {
               tryCatch({
-                
+
                 # Initialize counter for this context
                 if (!exists(context_tag, envir = plot_counters)) {
                   assign(context_tag, 0, envir = plot_counters)
                 }
-                
+
                 # Track ggplot objects before execution
                 env_before <- ls(envir = globalenv())
                 ggplots_before <- character(0)
@@ -419,26 +419,26 @@ run_qmd_collect_png <- function(qmd_path, timeout = 60, output_dir = NULL) {
                     ggplots_before <- c(ggplots_before, obj_name)
                   }
                 }
-                
+
                 code_text <- paste(code_lines, collapse = "\n")
                 eval(parse(text = code_text), envir = globalenv())
-                
+
                 env_after <- ls(envir = globalenv())
                 context_pattern <- gsub("__", "", tolower(context_tag))
-                
+
                 new_ggplot_objects <- character(0)
                 for (obj_name in env_after) {
                   obj <- get(obj_name, envir = globalenv())
-                  if (inherits(obj, "ggplot") && 
+                  if (inherits(obj, "ggplot") &&
                       grepl(paste0("^", context_pattern), tolower(obj_name)) &&
                       !obj_name %in% ggplots_before) {
                     new_ggplot_objects <- c(new_ggplot_objects, obj_name)
                   }
                 }
-                
+
                 code_lines_clean <- code_lines[!grepl("^#", trimws(code_lines))]
                 assignment_order <- character(0)
-                
+
                 for (line in code_lines_clean) {
                   for (plot_name in new_ggplot_objects) {
                     if (grepl(paste0("^\\s*", plot_name, "\\s*<-"), line)) {
@@ -448,18 +448,18 @@ run_qmd_collect_png <- function(qmd_path, timeout = 60, output_dir = NULL) {
                     }
                   }
                 }
-                
+
                 for (plot_name in assignment_order) {
                   plot_obj <- get(plot_name, envir = globalenv())
-                  
+
                   counter <- get(context_tag, envir = plot_counters) + 1
                   assign(context_tag, counter, envir = plot_counters)
-                  
+
                   png_filename <- file.path(
                     output_dir_path,
                     sprintf("plot__%s__%03d.png", context_tag, counter)
                   )
-                  
+
                   tryCatch({
                     ggsave(png_filename, plot_obj, width = 8, height = 6, dpi = 120, device = "png")
                     png_files <- c(png_files, png_filename)
@@ -468,26 +468,26 @@ run_qmd_collect_png <- function(qmd_path, timeout = 60, output_dir = NULL) {
                     cat("Error saving plot", plot_name, ":", e$message, "\n")
                   })
                 }
-                
+
               }, error = function(e) {
                 cat("Error in chunk with context", context_tag, ":", e$message, "\n")
               })
             }
           }
-          
+
           while (dev.cur() > 1) {
             dev.off()
           }
         })
-        
+
         return(png_files)
       },
       args = list(qmd_path = qmd_path, code_chunks = code_chunks, output_dir_path = abs_output_dir),
       timeout = timeout
     )
-    
+
     return(png_files)
-    
+
   }, error = function(e) {
     warning("Error in child process execution: ", e$message)
     return(character(0))
@@ -499,43 +499,43 @@ run_qmd_collect_png <- function(qmd_path, timeout = 60, output_dir = NULL) {
 #' @return List of chunk info with context and code
 extract_qmd_chunks_with_context <- function(qmd_path) {
   content <- readLines(qmd_path, warn = FALSE)
-  
+
   current_main <- NULL
   current_sub <- NULL
   chunk_list <- list()
   in_r_chunk <- FALSE
   current_chunk_code <- character(0)
   chunk_start_line <- 0
-  
+
   # Helper function to clean heading text into context tag
   clean_heading_text <- function(text) {
     text <- trimws(text)
-    
+
     # Extract common patterns first
     if (grepl("^\\([a-z]\\)", text)) {
       return(gsub("[^a-z]", "", regmatches(text, regexpr("\\([a-z]\\)", text))))
     }
-    
+
     if (grepl("^(Question|Problem|Exercise)\\s*[0-9]+", text, ignore.case = TRUE)) {
       number_match <- regmatches(text, regexpr("[0-9]+", text))
-      prefix <- if (grepl("^Question", text, ignore.case = TRUE)) "Q" else 
+      prefix <- if (grepl("^Question", text, ignore.case = TRUE)) "Q" else
                 if (grepl("^Problem", text, ignore.case = TRUE)) "P" else "E"
       return(paste0(prefix, number_match))
     }
-    
+
     # For other cases, clean and truncate
     text <- gsub("[^a-zA-Z0-9]", "_", text)
     text <- gsub("_+", "_", text)
     text <- substr(text, 1, 20)
     text <- gsub("^_|_$", "", text)
-    
+
     if (text == "") text <- "unknown"
     return(text)
   }
-  
+
   for (i in seq_along(content)) {
     line <- trimws(content[i])
-    
+
     # Handle R code chunks first
     if (grepl("^```\\{r", line)) {
       in_r_chunk <- TRUE
@@ -543,14 +543,14 @@ extract_qmd_chunks_with_context <- function(qmd_path) {
       chunk_start_line <- i
     } else if (grepl("^```\\s*$", line) && in_r_chunk) {
       in_r_chunk <- FALSE
-      
+
       if (!is.null(current_main)) {
         if (!is.null(current_sub)) {
           context_tag <- paste0(current_main, "__", current_sub)
         } else {
           context_tag <- current_main
         }
-        
+
         if (length(current_chunk_code) > 0) {
           chunk_list[[length(chunk_list) + 1]] <- list(
             context = context_tag,
@@ -559,7 +559,7 @@ extract_qmd_chunks_with_context <- function(qmd_path) {
           )
         }
       }
-      
+
     } else if (in_r_chunk) {
       current_chunk_code <- c(current_chunk_code, content[i])
     } else if (!in_r_chunk && grepl("^# ", line)) {
@@ -573,6 +573,6 @@ extract_qmd_chunks_with_context <- function(qmd_path) {
       current_sub <- clean_heading_text(heading_text)
     }
   }
-  
+
   return(chunk_list)
 }
