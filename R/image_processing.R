@@ -92,12 +92,12 @@ process_image <- function(args, prompt, system_instructions, marking_instruction
     model <- model_class$new()
   }
 
-  response <- model$generate_response(
+  result <- model$generate_response(
     prompt = rendered_prompt,
     system_instructions = system_instructions,
     submission_images = submission_images,
     solution_image = solution_image
   )
 
-  return(list(request_text, response))
+  return(list(request_text, result$response))
 }
