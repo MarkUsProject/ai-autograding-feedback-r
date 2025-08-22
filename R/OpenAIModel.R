@@ -83,7 +83,11 @@ OpenAIModel <- R6Class("OpenAIModel",
 
           # Wrapper support: { name, description, schema }  OR  bare schema
           has_wrapper  <- !is.null(raw$schema)
-          inner_schema <- if (has_wrapper) raw$schema else raw
+          if (has_wrapper){
+            inner_schema <- raw$schema
+          } else {
+            inner_schema <- raw
+          }
 
           # Use wrapper name if present; otherwise default to filename
           schema_name <- if (has_wrapper && !is.null(raw$name) && nzchar(raw$name)) {

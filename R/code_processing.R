@@ -13,7 +13,7 @@
 #' @param marking_instructions Optional marking instructions
 #' @param json_schema Optional JSON schema for structured response
 #' @return A list of two elements: the full request string and the model's response.
-#
+#'
 #' @examples
 #' result <- process_code(args, prompt, system_instructions)
 process_code <- function(args, prompt, system_instructions, marking_instructions = NULL, json_schema = NULL) {
@@ -63,7 +63,11 @@ process_code <- function(args, prompt, system_instructions, marking_instructions
     "User Prompt:\n", prompt
   )
 
-  result <- model$generate_response(prompt = prompt, system_instructions = system_instructions, json_schema = json_schema)
+  result <- model$generate_response(
+    prompt = prompt,
+    system_instructions = system_instructions,
+    json_schema = json_schema
+  )
 
   return(list(combined_prompt, result$response))
 }
