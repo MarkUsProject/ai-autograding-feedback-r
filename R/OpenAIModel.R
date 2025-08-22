@@ -83,7 +83,7 @@ OpenAIModel <- R6Class("OpenAIModel",
 
           # Wrapper support: { name, description, schema }  OR  bare schema
           has_wrapper  <- !is.null(raw$schema)
-          if (has_wrapper){
+          if (has_wrapper) {
             inner_schema <- raw$schema
           } else {
             inner_schema <- raw
