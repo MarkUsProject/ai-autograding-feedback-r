@@ -50,9 +50,7 @@ extract_json <- function(response) {
   for (match in matches) {
     parsed <- try(fromJSON(match, simplifyVector = FALSE), silent = TRUE)
     if (!inherits(parsed, "try-error")) {
-      if (!is.null(parsed$annotations)) {
-        json_objects[[length(json_objects) + 1]] <- parsed
-      }
+      json_objects[[length(json_objects) + 1]] <- parsed
     }
   }
   
@@ -179,10 +177,8 @@ test_that("Generates LLM Annotations", {
   
   annotations <- NULL
   for (obj in annotations_json_list) {
-    if (!is.null(obj$annotations)) {
-      annotations <- obj$annotations
-      break
-    }
+    annotations <- obj$annotations
+    break
   }
   
   if (is.null(annotations) || length(annotations) == 0) {
