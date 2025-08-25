@@ -6,8 +6,6 @@ library(testthat)
 helper_file <- system.file("markus_test_scripts", "llm_helpers.R", package = "aifeedbackr")
 if (file.exists(helper_file) && nzchar(helper_file)) {
   source(helper_file)
-} else if (file.exists("llm_helpers.R")) {
-  source("llm_helpers.R")
 } else {
   stop("Could not find llm_helpers.R")
 }
