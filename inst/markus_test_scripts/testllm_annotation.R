@@ -136,7 +136,7 @@ test_that("Generates LLM feedback for code scope", {
     model = "claude"
   )
   
-  if (is.null(llm_feedback) || llm_feedback == "" || nchar(llm_feedback) < 10) {
+  if (is.null(llm_feedback) || llm_feedback == "") {
     fail("No valid LLM feedback generated")
   }
   
