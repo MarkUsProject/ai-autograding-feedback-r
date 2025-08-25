@@ -92,9 +92,7 @@ add_annotation_columns <- function(annotations, submission_file_path) {
     column_starts <- c()
     column_ends <- c()
     
-    for (i in line_start:line_end) {
-      if (i > length(file_lines) || i < 1) next
-      
+    for (i in max(line_start, 1):min(line_end, length(file_lines))) {
       line <- file_lines[i]
       stripped_line <- sub("\n$", "", line)
       
