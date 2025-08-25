@@ -176,13 +176,13 @@ test_that("Generates LLM Annotations", {
   
   # Check if JSON appears to be truncated
   if (!grepl("\\}\\s*$", raw_annotation)) {
-    fail(paste("JSON response appears to be truncated. Raw response:", substr(raw_annotation, 1, 200)))
+    fail(paste("JSON response appears to be truncated. Raw response:", raw_annotation))
   }
   
   annotations_json_list <- extract_json(raw_annotation)
   
   if (length(annotations_json_list) == 0) {
-    fail(paste("Failed to parse JSON from annotation response. Raw response:", substr(raw_annotation, 1, 200)))
+    fail(paste("Failed to parse JSON from annotation response. Raw response:", raw_annotation))
   }
   
   annotations <- NULL
