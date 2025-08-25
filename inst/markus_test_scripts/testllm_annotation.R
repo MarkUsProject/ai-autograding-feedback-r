@@ -145,11 +145,7 @@ test_that("Generates LLM feedback for code scope", {
   attr(expectation, "markus_overall_comments") <- llm_feedback
   exp_signal(expectation)
   
-  expectation_with_message <- new_expectation(
-    type = "success",
-    message = llm_feedback
-  )
-  exp_signal(expectation_with_message)
+  succeed(message = llm_feedback)
 })
 
 test_that("Generates LLM Annotations", {
@@ -220,9 +216,5 @@ test_that("Generates LLM Annotations", {
     exp_signal(expectation)
   }
   
-  expectation_with_message <- new_expectation(
-    type = "success",
-    message = paste("Generated", length(annotations_with_columns), "annotations successfully")
-  )
-  exp_signal(expectation_with_message)
+  succeed(message = paste("Generated", length(annotations_with_columns), "annotations successfully"))
 })
