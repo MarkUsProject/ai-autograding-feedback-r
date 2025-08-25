@@ -9,7 +9,7 @@
 #' @param prompt A string containing the prompt template.
 #' @param system_instructions A string of system-level instructions for the model.
 #' @param marking_instructions Optional marking instructions.
-#'
+#' @param json_schema Optional JSON schema for structured response.
 #' @return A list of two elements: request and response from the model.
 #' @examples
 #' # Assuming valid args and prompt setup

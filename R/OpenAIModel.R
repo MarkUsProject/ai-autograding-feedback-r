@@ -24,7 +24,7 @@ OpenAIModel <- R6Class("OpenAIModel",
       #' @param system_instructions System-level instructions for the model
       #' @param submission_images Optional file path to submission images
       #' @param solution_image Optional file path to solution image
-      #' @param schema Optional JSON schema for structured response
+      #' @param json_schema Optional JSON schema for structured response
       #' @return A list with the original prompt and the model's response or error message
       response_text <- tryCatch({
         url <- "https://api.openai.com/v1/chat/completions"

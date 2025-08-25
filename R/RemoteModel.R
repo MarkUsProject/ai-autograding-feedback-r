@@ -47,7 +47,7 @@ RemoteModel <- R6Class("RemoteModel",
       headers <- httr::add_headers(`X-API-KEY` = api_key)
       schema <- NULL
       if (!is.null(json_schema)) {
-        schema <- jsonlite::fromJSON(json_schema)$json_schema
+        schema <- jsonlite::fromJSON(json_schema)$schema
       }
 
       body <- list(
