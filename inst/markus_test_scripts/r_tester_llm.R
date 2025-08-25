@@ -1,6 +1,5 @@
 #!/usr/bin/env Rscript
 
-.libPaths(c("/usr/local/lib/R/site-library", .libPaths()))
 library(testthat)
 
 helper_file <- system.file("markus_test_scripts", "llm_helpers.R", package = "aifeedbackr")

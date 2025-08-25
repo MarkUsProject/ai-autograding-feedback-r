@@ -1,6 +1,5 @@
 #!/usr/bin/env Rscript
 
-.libPaths(c("/usr/local/lib/R/site-library", .libPaths()))
 library(testthat)
 library(jsonlite)
 library(aifeedbackr)
