@@ -148,7 +148,6 @@ test_that("Generates LLM Annotations", {
     fail("No annotation response from model")
   }
   
-  # Check if JSON appears to be truncated
   if (!grepl("\\}\\s*$", raw_annotation)) {
     fail(paste("JSON response appears to be truncated. Raw response:", raw_annotation))
   }
