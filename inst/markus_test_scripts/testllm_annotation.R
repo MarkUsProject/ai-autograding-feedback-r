@@ -133,8 +133,7 @@ test_that("Generates LLM feedback for code scope", {
     prompt_custom = prompt_content,
     scope = "code",
     submission = submission_r_path,
-    model = "claude",
-    output = ""
+    model = "claude"
   )
   
   if (is.null(llm_feedback) || llm_feedback == "" || nchar(llm_feedback) < 10) {
@@ -166,8 +165,7 @@ test_that("Generates LLM Annotations", {
     prompt_custom = prompt_text,
     scope = "code",
     submission = submission_r_path,
-    model = "claude",
-    output = ""
+    model = "claude"
   )
   
   if (is.null(raw_annotation) || raw_annotation == "") {
