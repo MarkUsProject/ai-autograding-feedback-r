@@ -11,26 +11,11 @@ if (file.exists(".env")) {
   }, silent = TRUE)
 }
 
-resolve_resource_path <- function(rel) {
-  p2 <- rel
-  if (file.exists(p2)) return(normalizePath(p2, mustWork = TRUE))
-  p1 <- file.path("inst", rel)
-  if (file.exists(p1)) return(normalizePath(p1, mustWork = TRUE))
-  p <- system.file(rel, package = "aifeedbackr")
-  if (nzchar(p) && file.exists(p)) return(p)
-  stop("Resource not found: ", rel)
-}
-
 code_prompt_path <- normalizePath("prompt.md", mustWork = TRUE)
-submission_r_path <- if (file.exists("submission.R")) {
-  normalizePath("submission.R", mustWork = TRUE)
-} else {
-  tryCatch({
-    resolve_resource_path("markus_test_scripts/examples/submission.R")
-  }, error = function(e) {
-    stop("submission.R not found in current directory and no example file available")
-  })
+if (!file.exists("submission.R")) {
+  stop("submission.R must exist in the current directory for this MarkUs example.")
 }
+submission_r_path <- normalizePath("submission.R", mustWork = TRUE)
 
 ANNOTATION_PROMPT <- "These are the student mistakes you previously identified in the last message. For each of the mistakes you identified, return a JSON object containing an array of annotations, referencing the student's submission file for line and column #s. Each annotation should include: filename: The name of the student's file. content: A short description of the mistake. line_start and line_end: The line number(s) where the mistake occurs. Ensure the JSON is valid and properly formatted. Here is a sample format of the json array to return: { \"annotations\": [{\"filename\": \"submission.R\", \"content\": \"Variable 'x' is unused.\", \"line_start\": 5, \"line_end\": 5}]}. ONLY return the json object and nothing else. Make sure the line #s don't exceed the number of lines in the file. You can use markdown syntax in the annotation's content, especially when denoting code."
 
