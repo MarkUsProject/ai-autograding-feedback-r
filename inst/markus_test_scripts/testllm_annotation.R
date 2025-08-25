@@ -180,7 +180,7 @@ test_that("Generates LLM Annotations", {
     column_start <- annotation$column_start
     column_end <- annotation$column_end
     
-    rel_filename <- basename(filename)
+    rel_filename <- "submission.R"
     
     expectation <- new_expectation(
       type = "success",
