@@ -1,7 +1,7 @@
 library(base64enc)
 library(magick)
 
-process_image <- function(args, prompt, system_instructions, marking_instructions = NULL) {
+process_image <- function(args, prompt, system_instructions, marking_instructions = NULL, json_schema = NULL) {
   submission_file <- args$submission
   if (!is.null(args$solution)) {
     solution_file <- args$solution
@@ -96,7 +96,8 @@ process_image <- function(args, prompt, system_instructions, marking_instruction
     prompt = rendered_prompt,
     system_instructions = system_instructions,
     submission_images = submission_images,
-    solution_image = solution_image
+    solution_image = solution_image,
+    json_schema = json_schema
   )
 
   return(list(request_text, result$response))

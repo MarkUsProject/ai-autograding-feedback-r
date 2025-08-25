@@ -9,12 +9,12 @@
 #' @param prompt A string containing the prompt template.
 #' @param system_instructions A string of system-level instructions for the model.
 #' @param marking_instructions Optional marking instructions.
-#'
+#' @param json_schema Optional JSON schema for structured response.
 #' @return A list of two elements: request and response from the model.
 #' @examples
 #' # Assuming valid args and prompt setup
 #' result <- process_text(args, prompt, system_instructions)
-process_text <- function(args, prompt, system_instructions, marking_instructions = NULL) {
+process_text <- function(args, prompt, system_instructions, marking_instructions = NULL, json_schema = NULL) {
   if (!file.exists(args$submission)) {
     stop(paste("Submission file not found:", args$submission))
   }
@@ -63,7 +63,7 @@ process_text <- function(args, prompt, system_instructions, marking_instructions
     "User Prompt:\n", prompt
   )
 
-  result <- model$generate_response(prompt = prompt, system_instructions = system_instructions)
+  result <- model$generate_response(prompt = prompt, system_instructions = system_instructions, json_schema = json_schema)
 
   return(list(combined_prompt, result$response))
 }

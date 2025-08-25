@@ -24,12 +24,16 @@ RemoteModel <- R6Class("RemoteModel",
       prompt,
       system_instructions,
       submission_images = NULL,
-      solution_image = NULL
+      solution_image = NULL,
+      json_schema = NULL
     ) {
       #' Generate a model response using the prompt and optional file paths.
       #'
       #' @param prompt A character string prompt for the model
       #' @param system_instructions System-level model instructions
+      #' @param submission_images Optional file paths to submission images
+      #' @param solution_image Optional file path to solution image
+      #' @param json_schema Optional JSON schema for structured response
       #' @return A list with prompt and model response text, or NULL if failed
 
       # Load environment variables from .env
@@ -41,10 +45,16 @@ RemoteModel <- R6Class("RemoteModel",
       }
 
       headers <- httr::add_headers(`X-API-KEY` = api_key)
+      schema <- NULL
+      if (!is.null(json_schema)) {
+        schema <- jsonlite::fromJSON(json_schema)$schema
+      }
+
       body <- list(
         content = prompt,
         model = self$model_name,
-        system_instructions = system_instructions
+        system_instructions = system_instructions,
+        json_schema = schema
       )
 
       response <- httr::POST(url = self$remote_url, body = body, encode = "multipart", headers)

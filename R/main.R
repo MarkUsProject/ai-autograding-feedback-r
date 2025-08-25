@@ -32,7 +32,8 @@ main <- function(
   output_template = NULL,
   system_prompt = NULL,
   question = NULL,
-  marking_instructions = NULL
+  marking_instructions = NULL,
+  json_schema = NULL
 ) {
   prompt_content <- ""
   system_instructions <- ""
@@ -70,11 +71,11 @@ main <- function(
   }
 
   if (scope == "image") {
-    response <- process_image(environment(), prompt_content, system_instructions, marking_instructions_content)
+    response <- process_image(environment(), prompt_content, system_instructions, marking_instructions_content, json_schema)
   } else if (scope == "text") {
-    response <- process_text(environment(), prompt_content, system_instructions, marking_instructions_content)
+    response <- process_text(environment(), prompt_content, system_instructions, marking_instructions_content, json_schema)
   } else {
-    response <- process_code(environment(), prompt_content, system_instructions, marking_instructions_content)
+    response <- process_code(environment(), prompt_content, system_instructions, marking_instructions_content, json_schema)
   }
 
   if (!is.null(output_template) && file.exists(output_template)) {
