@@ -12,16 +12,16 @@ This version exposes a direct `main()` function instead of using a CLI, making i
 * Function-based interface (no CLI)
 * Uses `.md` prompt templates and markdown output formats
 * Modular file structure
-* Built-in dependency installer
+
 * LLM support via OpenAI API (Claude and remote extensible)
 
 ## Main Function Parameters
 
 | Parameter            | Description                                                 | Required |
 | -------------------- | ----------------------------------------------------------- | -------- |
-| `prompt`             | Name of prompt file in `data/prompts/user/`                 | ❌ **    |
+| `prompt`             | Path to prompt file                                         | ❌ **    |
 | `prompt_text`        | Inline string prompt to concatenate or use in place of file | ❌ **    |
-| `prompt_custom`      | Path to a custom prompt file (e.g. `my_prompt.md`)          | ❌ **    |
+| `prompt_custom`      | Direct prompt content as string                             | ❌ **    |
 | `scope`              | Processing scope (`code`, `text`, `image`)                  | ✅        |
 | `submission`         | Submission file path                                        | ✅        |
 | `solution`           | Solution file path                                          | ❌        |
@@ -30,10 +30,11 @@ This version exposes a direct `main()` function instead of using a CLI, making i
 | `output`             | Markdown output filepath                                    | ❌        |
 | `submission_image`   | Path to image (image scope)                                 | ❌        |
 | `solution_image`     | Path to reference image                                     | ❌        |
-| `output_template`    | Output template name (default: `response_only`)             | ❌        |
-| `system_prompt`      | Name of system prompt in `data/prompts/system/`             | ❌        |
+| `output_template`    | Path to output template file                                | ❌        |
+| `system_prompt`      | Path to system prompt file                                  | ❌        |
 | `question`           | Exact question/subquestion to test                          | ❌        |
 | `marking_instructions` | Marking instructions/rubric file path                     | ❌        |
+| `json_schema`        | JSON schema for structured response format                  | ❌        |
 
 **Note**: You must provide **one** of `prompt`, `prompt_text`, or `prompt_custom`.
 
@@ -45,17 +46,14 @@ The behavior of `main()` adapts based on the selected `scope`:
 
 ### Code
 * Input: student + solution code files (e.g., `.R`, `.py`)
-* Prompts prefixed with `code_`
 * Use case: error analysis, hint generation, annotated feedback
 
 ### Text
 * Input: student + solution PDFs or text files
-* Prompts prefixed with `text_`
 * Use case: compare student writing to rubric
 
 ### Image
-* Input: submission image + optional reference image
-* Prompts prefixed with `image_`
+* Input: submission image + optional reference image (supports QMD/RMD with automatic plot extraction)
 * Use case: plot evaluation, visual structure checking
 
 ---
@@ -65,16 +63,14 @@ The behavior of `main()` adapts based on the selected `scope`:
 In R (script or console):
 
 ```r
-source("main.R")
+library(aifeedbackr)
 
 main(
-  prompt = "code_table",
+  prompt = "tests/fixtures/code_example/instructions.md",
   scope = "code",
-  model = "remote",
-  submission = "test_submissions/code_example/fail_submission/fail_submission.R",
-  solution = "test_submissions/code_example/solution.R",
-  system_prompt = "student_test_feedback",
-  output_template = "response_only",
+  model = "openai",
+  submission = "tests/fixtures/code_example/fail_submission/fail_submission.R",
+  solution = "tests/fixtures/code_example/solution.R",
   output = "output/q1.md"
 )
 ```
@@ -92,13 +88,12 @@ Prompts may include placeholders such as:
 * `{solution_image}`
 * `{marking_instructions}`
 
-If your scope and prompt don't match (e.g., `scope = "code"` with a `text_*.md`), the function will stop with an error.
 
 ---
 
 ## Output Templates
 
-Templates are stored in `data/output/`. They support the following placeholders:
+Output templates can be provided as file paths via the `output_template` parameter. They support the following placeholders:
 
 * `{model}` – Model name used
 * `{request}` – Final constructed prompt
@@ -106,14 +101,14 @@ Templates are stored in `data/output/`. They support the following placeholders:
 * `{timestamp}` – Generation time
 * `{submission}` – Path to submission
 
-Default template: `response_only.md`
+Default behavior: If no template is provided, outputs only the `{response}` content.
 
 ---
 
 ## File Structure
 
 ```
-ai-feedback/
+aifeedbackr/
 ├── R/
 │   └── code_processing.R
 │   └── text_processing.R
@@ -125,10 +120,12 @@ ai-feedback/
 │   └── OpenAIModel.R
 │   └── RemoteModel.R
 ├── man/
+├── inst/
+│   └── markus_test_scripts/
 ├── tests/
 │   ├── fixtures/
 │   ├── testthat/
-│   ├── testthat.R
+│   └── testthat.R
 ```
 
 ---
